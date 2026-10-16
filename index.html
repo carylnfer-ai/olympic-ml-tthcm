@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Tạ Trần Ngọc Ánh - CLC50F">
+<!-- Thiết kế & phát triển bởi Tạ Trần Ngọc Ánh - CLC50F (ULAW) -->
+<title>ULAW Time Arcade - Lịch Sử Đảng</title>
+<style>
+  :root {
+    --bg: #131524;
+    --card: #1e2238;
+    --card-hover: #282d4a;
+    --accent: #ff7eb3;
+    --accent2: #7afcff;
+    --accent3: #feff9c;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  body {
+    background: radial-gradient(circle at top, #1e2238 0%, #0f111d 100%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header {
+    text-align: center;
+    max-width: 760px;
+    width: 100%;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: rgba(30, 34, 56, 0.85);
+    border: 1px solid rgba(255, 126, 179, 0.3);
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .header h1 {
+    font-size: 1.4rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .header p { font-size: 0.9rem; color: var(--muted); }
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.06);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 760px;
+    margin-bottom: 18px;
+  }
+  .tab-btn {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  .tab-btn:hover { background: var(--card-hover); transform: translateY(-2px); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #ff7eb3, #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(255, 126, 179, 0.4);
+  }
+  .game-container {
+    width: 100%;
+    max-width: 760px;
+    background: rgba(30, 34, 56, 0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 20px;
+    min-height: 400px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  .mode-section { display: none; }
+  .mode-section.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Mode 1: Swipe / Bucket Sort */
+  .swipe-card {
+    background: linear-gradient(145deg, #262b47, #1a1e33);
+    border: 2px solid rgba(122, 252, 255, 0.35);
+    border-radius: 18px;
+    padding: 28px 20px;
+    text-align: center;
+    margin: 16px auto;
+    max-width: 520px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .swipe-tag {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+  .swipe-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+  .bucket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .bucket-btn {
+    background: #282d4a;
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 14px 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .bucket-btn:hover {
+    border-color: var(--accent);
+    background: #32385c;
+    transform: scale(1.02);
+  }
+
+  /* Mode 2: Memory Match */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .mem-card {
+    background: #262b47;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 14px 10px;
+    min-height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .mem-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .mem-card.selected {
+    background: #3b2d54;
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(255, 126, 179, 0.5);
+  }
+  .mem-card.matched {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: var(--success);
+    color: var(--success);
+    cursor: default;
+    opacity: 0.65;
+    transform: scale(0.97);
+  }
+  .mem-card.wrong {
+    background: rgba(251, 113, 133, 0.25);
+    border-color: var(--danger);
+  }
+
+  /* Mode 3: Fill-the-Core Builder */
+  .blueprint-box {
+    background: #171a2b;
+    border-left: 4px solid var(--accent);
+    padding: 16px;
+    border-radius: 12px;
+    margin: 14px 0;
+    line-height: 1.7;
+    font-size: 0.98rem;
+  }
+  .slot {
+    display: inline-block;
+    min-width: 110px;
+    padding: 2px 10px;
+    margin: 2px 4px;
+    border-bottom: 2px dashed var(--accent2);
+    color: var(--accent3);
+    font-weight: 700;
+    text-align: center;
+    background: rgba(122, 252, 255, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .word-chip {
+    background: #2b3152;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .word-chip:hover { background: var(--accent); color: #131524; }
+  .word-chip.used { opacity: 0.35; pointer-events: none; }
+
+  /* Mode 4: Timeline Order */
+  .timeline-pool, .timeline-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .tl-item {
+    background: #262b47;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .tl-item:hover { border-color: var(--accent2); background: #2f3559; }
+  .tl-item.correct-order { border-color: var(--success); background: rgba(74, 222, 128, 0.14); }
+
+  .feedback-banner {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-align: center;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-btn {
+    background: linear-gradient(90deg, #7afcff, #38bdf8);
+    color: #0f172a;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .credit-badge { margin-top: 10px; display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,126,179,0.12); border: 1px solid var(--accent); color: var(--accent3); font-size: 0.85rem; font-weight: 600; }
+  .credit-footer { margin: 28px 0 12px; text-align: center; color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+  .credit-footer b { color: var(--accent2); }
+  .qz-top { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-weight:700; color:var(--accent3); margin-bottom:10px; }
+  .qz-q { font-size:1.02rem; line-height:1.5; margin:8px 0 12px; }
+  .qz-opt { display:block; width:100%; text-align:left; padding:12px 14px; margin:8px 0; border-radius:12px; border:1px solid #3a4066; background:var(--card); color:var(--text); font-size:0.95rem; cursor:pointer; }
+  .qz-opt:hover { background:var(--card-hover); }
+  .qz-opt.ok { border-color:var(--success); background:rgba(74,222,128,0.15); }
+  .qz-opt.bad { border-color:var(--danger); background:rgba(251,113,133,0.15); }
+  .qz-note { font-size:0.8rem; color:var(--muted); margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✨ TRẠM GIẢI CỨU LỊCH SỬ ĐẢNG ULAW ✨</h1>
+  <p>Chế độ Êm Dịu Cho Ngày Đau Đầu — Không Trắc Nghiệm Truyền Thống, Chỉ Chạm & Ghép Từ Khóa!</p>
+  <div class="credit-badge">🎓 Tác giả: Tạ Trần Ngọc Ánh – CLC50F</div>
+  <div class="stats-bar">
+    <div class="stat-pill">⭐ Điểm Uy Tín: <span id="score">0</span></div>
+    <div class="stat-pill">🔥 Chuỗi Đúng: <span id="streak">0</span></div>
+    <div class="stat-pill">🎯 Cấp Độ: <span id="rank">Tân Binh Luật Gia</span></div>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="tab-btn active" onclick="switchTab(0)">⚡ 1. Phân Loại Thần Tốc</button>
+  <button class="tab-btn" onclick="switchTab(1)">🃏 2. Ghép Thẻ Từ Khóa</button>
+  <button class="tab-btn" onclick="switchTab(2)">🧩 3. Lắp Ráp Khung Điểm 10</button>
+  <button class="tab-btn" onclick="switchTab(3)">⏳ 4. Sắp Xếp Thời Gian</button>
+  <button class="tab-btn" onclick="switchTab(4)">📝 5. Luyện Đề Olympic</button>
+</div>
+
+<div class="game-container">
+  <!-- MODE 1: BUCKET SORT -->
+  <div class="mode-section active" id="mode-0">
+    <h3 style="color: var(--accent3); margin-bottom: 4px;">⚡ Phân Loại Thần Tốc (Chạm Đúng Rổ!)</h3>
+    <p style="font-size: 0.86rem; color: var(--muted);">Đọc mảnh dữ kiện bên dưới và ném ngay vào đúng văn kiện/hội nghị!</p>
+    <div class="swipe-card" id="swipe-card">
+      <div class="swipe-tag" id="swipe-topic">CÂU 1: NĂM 1930</div>
+      <div class="swipe-text" id="swipe-text">Đang tải...</div>
+    </div>
+    <div class="bucket-grid" id="bucket-options"></div>
+    <div class="feedback-banner" id="swipe-feedback">💡 Mẹo: Chỉ cần nhìn từ khóa cốt lõi để phân loại!</div>
+  </div>
+
+  <!-- MODE 2: MEMORY MATCH -->
+  <div class="mode-section" id="mode-1">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div>
+        <h3 style="color: var(--accent3); margin-bottom: 4px;">🃏 Ghép Đôi Sự Kiện & Từ Khóa Ăn Điểm</h3>
+        <p style="font-size: 0.86rem; color: var(--muted);">Chạm 1 thẻ Sự Kiện rồi chạm 1 thẻ Từ Khóa tương ứng để triệt tiêu chúng!</p>
+      </div>
+      <button class="action-btn" onclick="initMemoryGame()" style="margin-top:0;">🔄 Đổi Bộ Thẻ Mới</button>
+    </div>
+    <div class="memory-grid" id="memory-grid"></div>
+    <div class="feedback-banner" id="mem-feedback">✨ Hãy ghép hết 6 cặp thẻ trên bàn!</div>
+  </div>
+
+  <!-- MODE 3: FILL THE CORE -->
+  <div class="mode-section" id="mode-2">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div>
+        <h3 style="color: var(--accent3); margin-bottom: 4px;">🧩 Lắp Ráp Khung Bài Chuẩn Gu Thầy Chấm</h3>
+        <p style="font-size: 0.86rem; color: var(--muted);">Chạm vào các viên thuốc từ khóa bên dưới để lấp đầy chỗ trống!</p>
+      </div>
+      <button class="action-btn" onclick="nextBlueprint()" style="margin-top:0;">⏭️ Bản Thiết Kế Tiếp Theo</button>
+    </div>
+    <div class="blueprint-box" id="blueprint-box"></div>
+    <div class="word-bank" id="word-bank"></div>
+    <div class="feedback-banner" id="bp-feedback">🎯 Chạm vào từ khóa khớp với ô trống đang sáng!</div>
+  </div>
+
+  <!-- MODE 4: TIMELINE -->
+  <div class="mode-section" id="mode-3">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+      <div>
+        <h3 style="color: var(--accent3); margin-bottom: 4px;">⏳ Khôi Phục Dòng Thời Gian Bị Lệch</h3>
+        <p style="font-size: 0.86rem; color: var(--muted);">Chạm lần lượt các sự kiện theo đúng thứ tự từ SỚM NHẤT đến MUỘN NHẤT!</p>
+      </div>
+      <button class="action-btn" onclick="nextTimelineSet()" style="margin-top:0;">🔄 Đổi Màn Thời Gian</button>
+    </div>
+    <div class="timeline-pool" id="tl-pool"></div>
+    <div class="feedback-banner" id="tl-feedback">⏳ Hãy chạm vào sự kiện diễn ra ĐẦU TIÊN!</div>
+  </div>
+</div>
+
+<script>
+  let score = 0;
+  let streak = 0;
+
+  function addScore(pts) {
+    score += pts;
+    streak += 1;
+    document.getElementById('score').innerText = score;
+    document.getElementById('streak').innerText = streak;
+    let rank = "Tân Binh Luật Gia";
+    if (score >= 50) rank = "Thợ Săn Từ Khóa 🔥";
+    if (score >= 120) rank = "Chiến Thần Đề Cương 👑";
+    if (score >= 200) rank = "Trùm Cuối Điểm A+ ULAW 🏆";
+    document.getElementById('rank').innerText = rank;
+  }
+
+  function resetStreak() {
+    streak = 0;
+    document.getElementById('streak').innerText = streak;
+  }
+
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    document.querySelectorAll('.mode-section').forEach((s, i) => s.classList.toggle('active', i === idx));
+  }
+
+  // ================= MODE 1 DATA: BUCKET SORT =================
+  const swipeItems = [
+    {
+      topic: "CÂU 1: SO SÁNH 2 VĂN KIỆN NĂM 1930",
+      text: "“Đặt nhiệm vụ chống đế quốc, giành độc lập dân tộc lên HÀNG ĐẦU; đoàn kết rộng rãi mọi giai cấp, tầng lớp yêu nước.”",
+      options: ["Cương lĩnh (2/1930)", "Luận cương (10/1930)"],
+      answer: "Cương lĩnh (2/1930)",
+      explain: "Chuẩn xác! Cương lĩnh 2/1930 của Nguyễn Ái Quốc đặt giải phóng dân tộc lên hàng đầu."
+    },
+    {
+      topic: "CÂU 1: SO SÁNH 2 VĂN KIỆN NĂM 1930",
+      text: "“Vấn đề thổ địa là CÁI CỐT của cách mạng tư sản dân quyền; nặng về đấu tranh giai cấp và cách mạng ruộng đất.”",
+      options: ["Cương lĩnh (2/1930)", "Luận cương (10/1930)"],
+      options: ["Cương lĩnh (2/1930)", "Luận cương (10/1930)"],
+      answer: "Luận cương (10/1930)",
+      explain: "Đúng luôn! Luận cương 10/1930 (Trần Phú) nặng về giai cấp và coi thổ địa là cái cốt."
+    },
+    {
+      topic: "CÂU 2: CHUYỂN HƯỚNG CHIẾN LƯỢC 1939 - 1941",
+      text: "“Tạm gác khẩu hiệu cách mạng ruộng đất; lập Mặt trận dân tộc thống nhất phản đế Đông Dương (Hóc Môn, Gia Định).”",
+      options: ["Hội nghị TW 6 (11/1939)", "Hội nghị TW 7 (11/1940)", "Hội nghị TW 8 (5/1941)"],
+      answer: "Hội nghị TW 6 (11/1939)",
+      explain: "Tuyệt vời! HN TW 6 (11/1939) tại Bà Điểm mở đầu chuyển hướng, lập Mặt trận phản đế Đông Dương."
+    },
+    {
+      topic: "CÂU 2: CHUYỂN HƯỚNG CHIẾN LƯỢC 1939 - 1941",
+      text: "“Cách mạng phản đế và cách mạng thổ địa phải ĐỒNG THỜI TIẾN, vẫn chưa thật sự dứt khoát đặt giải phóng dân tộc lên hàng đầu.”",
+      options: ["Hội nghị TW 6 (11/1939)", "Hội nghị TW 7 (11/1940)", "Hội nghị TW 8 (5/1941)"],
+      answer: "Hội nghị TW 7 (11/1940)",
+      explain: "Quá đỉnh! HN TW 7 (11/1940) ở Đình Bảng (Bắc Ninh) là bước 'chưa dứt khoát'."
+    },
+    {
+      topic: "CÂU 2: CHUYỂN HƯỚNG CHIẾN LƯỢC 1939 - 1941",
+      text: "“Giải quyết vấn đề dân tộc trong khuôn khổ TỪNG NƯỚC Đông Dương; thành lập Mặt trận VIỆT MINH; lập nước VNDCCH.”",
+      options: ["Hội nghị TW 6 (11/1939)", "Hội nghị TW 7 (11/1940)", "Hội nghị TW 8 (5/1941)"],
+      answer: "Hội nghị TW 8 (5/1941)",
+      explain: "Xuất sắc! HN TW 8 (5/1941) tại Cao Bằng do Nguyễn Ái Quốc chủ trì hoàn chỉnh chuyển hướng!"
+    },
+    {
+      topic: "CÂU 3: BẢO VỆ CHÍNH QUYỀN 1945 - 1946",
+      text: "Sách lược “Hoa - Việt thân thiện”, Đảng tuyên bố tự giải tán (11/11/1945), nhường 70 ghế Quốc hội không qua bầu cử.",
+      options: ["Đối phó quân Tưởng", "Hòa hoãn với Pháp"],
+      answer: "Đối phó quân Tưởng",
+      explain: "Chuẩn! Giai đoạn đầu ta hòa với Tưởng ở miền Bắc để tập trung đánh Pháp ở miền Nam."
+    },
+    {
+      topic: "CÂU 3: BẢO VỆ CHÍNH QUYỀN 1945 - 1946",
+      text: "Ký Hiệp định Sơ bộ (6/3/1946) cho 15.000 quân ra Bắc thay 20 vạn quân Tưởng và ra Chỉ thị “Hòa để tiến” (9/3/1946).",
+      options: ["Đối phó quân Tưởng", "Hòa hoãn với Pháp"],
+      answer: "Hòa hoãn với Pháp",
+      explain: "Chính xác! Sau Hiệp ước Hoa-Pháp (28/2/1946), ta chuyển sang hòa với Pháp để đuổi nhanh 20 vạn quân Tưởng."
+    },
+    {
+      topic: "CÂU 4: BA BƯỚC ĐỘT PHÁ KINH TẾ (1979 - 1986)",
+      text: "Chủ trương phá bỏ rào cản để “SẢN XUẤT BUNG RA”; gắn liền với Chỉ thị 100 (Khoán 100) và Quyết định 25/CP, 26/CP.",
+      options: ["HN TW 6 (8/1979)", "HN TW 8 (6/1985)", "HN Bộ Chính trị (8/1986)"],
+      answer: "HN TW 6 (8/1979)",
+      explain: "Chuẩn! Bước đột phá đầu tiên (8/1979) = Sản xuất bung ra!"
+    },
+    {
+      topic: "CÂU 4: BA BƯỚC ĐỘT PHÁ KINH TẾ (1979 - 1986)",
+      text: "Xóa bỏ cơ chế tập trung quan liêu bao cấp, lấy GIÁ - LƯƠNG - TIỀN làm khâu đột phá, thừa nhận sản xuất hàng hóa.",
+      options: ["HN TW 6 (8/1979)", "HN TW 8 (6/1985)", "HN Bộ Chính trị (8/1986)"],
+      answer: "HN TW 8 (6/1985)",
+      explain: "Đúng rồi! Bước đột phá thứ hai (6/1985) = Giá - Lương - Tiền (nhưng vội vàng đổi tiền gây khủng hoảng thêm)."
+    },
+    {
+      topic: "CÂU 4: BA BƯỚC ĐỘT PHÁ KINH TẾ (1979 - 1986)",
+      text: "Thật sự lấy NÔNG NGHIỆP là mặt trận hàng đầu; thừa nhận nền kinh tế nhiều thành phần trong thời kỳ quá độ.",
+      options: ["HN TW 6 (8/1979)", "HN TW 8 (6/1985)", "HN Bộ Chính trị (8/1986)"],
+      answer: "HN Bộ Chính trị (8/1986)",
+      explain: "Đỉnh! Bước đột phá thứ ba (8/1986) kết luận 3 vấn đề, quyết định sự ra đời đường lối đổi mới."
+    },
+    {
+      topic: "CÂU 6: CƯƠNG LĨNH 1991 VS CƯƠNG LĨNH 2011",
+      text: "Nêu 8 đặc trưng XHCN, bổ sung đặc trưng “Dân giàu, nước mạnh, dân chủ, công bằng, văn minh” và “Nhà nước pháp quyền XHCN”.",
+      options: ["Cương lĩnh 1991 (ĐH VII)", "Cương lĩnh 2011 (ĐH XI)"],
+      answer: "Cương lĩnh 2011 (ĐH XI)",
+      explain: "Chuẩn luôn! 1991 có 6 đặc trưng, 2011 có 8 đặc trưng (thêm 2 đặc trưng bao trùm này)."
+    },
+    {
+      topic: "CÂU 6: CƯƠNG LĨNH 1991 VS CƯƠNG LĨNH 2011",
+      text: "Diễn đạt chủ thể là “Do nhân dân LAO ĐỘNG làm chủ” và kinh tế dựa trên “chế độ CÔNG HỮU về các tư liệu sản xuất chủ yếu”.",
+      options: ["Cương lĩnh 1991 (ĐH VII)", "Cương lĩnh 2011 (ĐH XI)"],
+      answer: "Cương lĩnh 1991 (ĐH VII)",
+      explain: "Quá nhớ bài! Đến 2011 thì đổi thành 'Do nhân dân làm chủ' và 'quan hệ sản xuất tiến bộ phù hợp'."
+    }
+  ];
+  let currentSwipeIdx = 0;
+
+  function renderSwipe() {
+    const item = swipeItems[currentSwipeIdx];
+    document.getElementById('swipe-topic').innerText = `${item.topic} (${currentSwipeIdx + 1}/${swipeItems.length})`;
+    document.getElementById('swipe-text').innerText = item.text;
+    const container = document.getElementById('bucket-options');
+    container.innerHTML = '';
+    item.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'bucket-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkSwipe(opt);
+      container.appendChild(btn);
+    });
+  }
+
+  function checkSwipe(choice) {
+    const item = swipeItems[currentSwipeIdx];
+    const fb = document.getElementById('swipe-feedback');
+    const card = document.getElementById('swipe-card');
+    if (choice === item.answer) {
+      addScore(15);
+      card.style.borderColor = 'var(--success)';
+      fb.style.background = 'rgba(74, 222, 128, 0.15)';
+      fb.style.color = 'var(--success)';
+      fb.innerText = `✅ ${item.explain}`;
+      setTimeout(() => {
+        card.style.borderColor = 'rgba(122, 252, 255, 0.35)';
+        currentSwipeIdx = (currentSwipeIdx + 1) % swipeItems.length;
+        renderSwipe();
+      }, 1400);
+    } else {
+      resetStreak();
+      card.style.borderColor = 'var(--danger)';
+      fb.style.background = 'rgba(251, 113, 133, 0.2)';
+      fb.style.color = 'var(--danger)';
+      fb.innerText = `❌ Chưa khớp rồi! Thử chạm rổ bên cạnh nhé!`;
+    }
+  }
+
+  // ================= MODE 2 DATA: MEMORY MATCH =================
+  const allPairs = [
+    { a: "Cương lĩnh 2/1930", b: "Giải phóng dân tộc hàng đầu" },
+    { a: "Luận cương 10/1930", b: "Vấn đề thổ địa là cái cốt" },
+    { a: "HN Trung ương 8 (5/1941)", b: "Lập Mặt trận Việt Minh" },
+    { a: "Chỉ thị 25/11/1945", b: "Kháng chiến kiến quốc (Diệt 3 giặc)" },
+    { a: "Bình dân học vụ (cuối 1946)", b: "Hơn 2,5 triệu người biết chữ" },
+    { a: "Tổng tuyển cử 6/1/1946", b: "Bầu 333 đại biểu Quốc hội" },
+    { a: "HN Trung ương 6 (8/1979)", b: "Sản xuất bung ra & Khoán 100" },
+    { a: "HN Trung ương 8 (6/1985)", b: "Giá - Lương - Tiền (Xóa bao cấp)" },
+    { a: "Đại hội VI (12/1986)", b: "Nhìn thẳng sự thật (Lạm phát 774%)" },
+    { a: "Ba chương trình kinh tế lớn (ĐH VI)", b: "Lương thực-thực phẩm, Hàng tiêu dùng, Hàng xuất khẩu" },
+    { a: "Cương lĩnh 1991 (ĐH VII)", b: "6 đặc trưng & 7 phương hướng" },
+    { a: "Cương lĩnh 2011 (ĐH XI)", b: "8 đặc trưng & 8 mối quan hệ lớn" }
+  ];
+
+  let selectedCard = null;
+  let matchedCount = 0;
+
+  function initMemoryGame() {
+    selectedCard = null;
+    matchedCount = 0;
+    document.getElementById('mem-feedback').innerText = "✨ Hãy chạm 2 thẻ tương ứng để ghép đôi!";
+    document.getElementById('mem-feedback').style.color = "var(--text)";
+    const shuffledPairs = [...allPairs].sort(() => Math.random() - 0.5).slice(0, 6);
+    let deck = [];
+    shuffledPairs.forEach((p, idx) => {
+      deck.push({ id: idx, text: "📌 " + p.a });
+      deck.push({ id: idx, text: "🔑 " + p.b });
+    });
+    deck.sort(() => Math.random() - 0.5);
+
+    const grid = document.getElementById('memory-grid');
+    grid.innerHTML = '';
+    deck.forEach((cardData) => {
+      const div = document.createElement('div');
+      div.className = 'mem-card';
+      div.innerText = cardData.text;
+      div.onclick = () => onCardClick(div, cardData);
+      grid.appendChild(div);
+    });
+  }
+
+  function onCardClick(el, data) {
+    if (el.classList.contains('matched') || el === selectedCard?.el) return;
+    el.classList.add('selected');
+
+    if (!selectedCard) {
+      selectedCard = { el, data };
+    } else {
+      const prev = selectedCard;
+      selectedCard = null;
+      if (prev.data.id === data.id) {
+        el.classList.remove('selected');
+        prev.el.classList.remove('selected');
+        el.classList.add('matched');
+        prev.el.classList.add('matched');
+        matchedCount++;
+        addScore(20);
+        document.getElementById('mem-feedback').innerText = `🎉 Quá chuẩn! Đã ghép được ${matchedCount}/6 cặp!`;
+        if (matchedCount === 6) {
+          document.getElementById('mem-feedback').innerText = "🏆 Tuyệt đỉnh! Ngọc Ánh đã dọn sạch bàn thẻ! Bấm 'Đổi Bộ Thẻ Mới' để chơi tiếp nha!";
+        }
+      } else {
+        resetStreak();
+        el.classList.add('wrong');
+        prev.el.classList.add('wrong');
+        document.getElementById('mem-feedback').innerText = "🙈 Chưa khớp rồi! Nhớ vị trí của chúng nhé!";
+        setTimeout(() => {
+          el.classList.remove('selected', 'wrong');
+          prev.el.classList.remove('selected', 'wrong');
+        }, 650);
+      }
+    }
+  }
+
+  // ================= MODE 3 DATA: FILL THE CORE =================
+  const blueprints = [
+    {
+      title: "Khung Điểm 10 - Câu 5: Đại Hội VI (12/1986)",
+      template: [
+        "1. Bối cảnh: Đất nước khủng hoảng kinh tế - xã hội kéo dài, lạm phát năm 1986 tăng vọt lên hơn ",
+        { ans: "774%" },
+        ". Nguyên nhân chủ quan do duy trì quá lâu cơ chế ",
+        { ans: "tập trung, quan liêu, bao cấp" },
+        ".<br>2. Nội dung: Đại hội VI họp tháng 12/1986, bầu đồng chí ",
+        { ans: "Nguyễn Văn Linh" },
+        " làm Tổng Bí thư. Tinh thần là nhìn thẳng vào sự thật, chỉ ra khuynh hướng sai lầm chủ yếu là bệnh ",
+        { ans: "chủ quan duy ý chí" },
+        ". Về kinh tế, tập trung thực hiện ",
+        { ans: "ba chương trình kinh tế lớn" },
+        " (lương thực - thực phẩm, hàng tiêu dùng, hàng xuất khẩu)."
+      ],
+      distractors: ["Đỗ Mười", "300%", "Khoán 100"]
+    },
+    {
+      title: "Khung Điểm 10 - Câu 2: Hội Nghị Trung Ương 8 (5/1941)",
+      template: [
+        "1. Bối cảnh: Ngày 28/1/1941, Nguyễn Ái Quốc về nước tại ",
+        { ans: "Cao Bằng" },
+        ". Tháng 5/1941, Người chủ trì Hội nghị TW 8, bầu đồng chí ",
+        { ans: "Trường Chinh" },
+        " làm Tổng Bí thư.<br>2. Nội dung: Khẳng định cách mạng trước mắt chỉ giải quyết một vấn đề cần kíp là ",
+        { ans: "dân tộc giải phóng" },
+        ". Tiếp tục hoãn cách mạng ruộng đất, thành lập Mặt trận ",
+        { ans: "Việt Minh" },
+        ", sau khi thành công sẽ lập nhà nước ",
+        { ans: "Việt Nam Dân chủ Cộng hòa" },
+        " của chung toàn thể dân tộc (không lập Xôviết công nông)."
+      ],
+      distractors: ["Bắc Ninh", "Trần Phú", "Phản đế đồng minh"]
+    },
+    {
+      title: "Khung Điểm 10 - Câu 3: Bảo Vệ Chính Quyền (1945 - 1946)",
+      template: [
+        "1. Bối cảnh: Tình thế ",
+        { ans: "ngàn cân treo sợi tóc" },
+        " (95% dân mù chữ, 2 triệu người chết đói, miền Bắc có 20 vạn quân Tưởng).<br>2. Nội dung: Ngày 25/11/1945, Trung ương ra Chỉ thị ",
+        { ans: "Kháng chiến kiến quốc" },
+        ", xác định kẻ thù chính là ",
+        { ans: "thực dân Pháp xâm lược" },
+        ". Về ngoại giao, nguyên tắc bất di bất dịch là ",
+        { ans: "Dĩ bất biến, ứng vạn biến" },
+        ": Hòa với Tưởng rồi chuyển sang ký ",
+        { ans: "Hiệp định Sơ bộ (6/3/1946)" },
+        " với Pháp để đuổi nhanh 20 vạn quân Tưởng về nước."
+      ],
+      distractors: ["Tạm ước 14/9", "Nhật Bản", "Toàn dân kháng chiến"]
+    }
+  ];
+
+  let currentBpIdx = 0;
+  let currentSlotIdx = 0;
+  let activeSlots = [];
+
+  function renderBlueprint() {
+    const bp = blueprints[currentBpIdx];
+    const box = document.getElementById('blueprint-box');
+    const bank = document.getElementById('word-bank');
+    box.innerHTML = `<div style="color:var(--accent2); font-weight:700; margin-bottom:8px;">📋 ${bp.title}</div>`;
+    activeSlots = [];
+    currentSlotIdx = 0;
+
+    let words = [];
+    bp.template.forEach((part) => {
+      if (typeof part === 'string') {
+        box.innerHTML += part;
+      } else {
+        const slotId = activeSlots.length;
+        activeSlots.push(part.ans);
+        words.push(part.ans);
+        box.innerHTML += `<span class="slot" id="slot-${slotId}">[ ? ]</span>`;
+      }
+    });
+
+    words = words.concat(bp.distractors).sort(() => Math.random() - 0.5);
+    bank.innerHTML = '';
+    words.forEach((w) => {
+      const chip = document.createElement('button');
+      chip.className = 'word-chip';
+      chip.innerText = w;
+      chip.onclick = () => onChipClick(chip, w);
+      bank.appendChild(chip);
+    });
+    highlightActiveSlot();
+    document.getElementById('bp-feedback').innerText = "🎯 Chạm vào từ khóa khớp với ô [ ? ] đang sáng viền!";
+  }
+
+  function highlightActiveSlot() {
+    activeSlots.forEach((_, i) => {
+      const el = document.getElementById(`slot-${i}`);
+      if (el) {
+        el.style.borderColor = (i === currentSlotIdx) ? 'var(--accent)' : 'var(--accent2)';
+        el.style.background = (i === currentSlotIdx) ? 'rgba(255,126,179,0.22)' : 'rgba(122,252,255,0.08)';
+      }
+    });
+  }
+
+  function onChipClick(chipEl, word) {
+    if (currentSlotIdx >= activeSlots.length) return;
+    const expected = activeSlots[currentSlotIdx];
+    const fb = document.getElementById('bp-feedback');
+    if (word === expected) {
+      const slotEl = document.getElementById(`slot-${currentSlotIdx}`);
+      slotEl.innerText = word;
+      slotEl.style.color = 'var(--success)';
+      slotEl.style.borderBottom = '2px solid var(--success)';
+      chipEl.classList.add('used');
+      currentSlotIdx++;
+      addScore(15);
+      highlightActiveSlot();
+      if (currentSlotIdx >= activeSlots.length) {
+        fb.innerText = "🌟 Hoàn hảo! Đủ ý chuẩn chỉnh theo cách chấm của thầy ULAW! Bấm 'Bản Thiết Kế Tiếp Theo' nhé!";
+      } else {
+        fb.innerText = "✅ Chuẩn luôn! Tiếp tục điền ô tiếp theo nào!";
+      }
+    } else {
+      resetStreak();
+      fb.innerText = "❌ Từ khóa này chưa khớp với ô hiện tại, thử viên khác nhé!";
+    }
+  }
+
+  function nextBlueprint() {
+    currentBpIdx = (currentBpIdx + 1) % blueprints.length;
+    renderBlueprint();
+  }
+
+  // ================= MODE 4 DATA: TIMELINE =================
+  const timelineSets = [
+    [
+      { order: 1, label: "Cương lĩnh chính trị đầu tiên tại Cửu Long, Hồng Kông (2/1930)" },
+      { order: 2, label: "Luận cương chính trị tại Hương Cảng, bầu Trần Phú làm TBT (10/1930)" },
+      { order: 3, label: "Hội nghị TW 6 tại Bà Điểm, Hóc Môn mở đầu chuyển hướng (11/1939)" },
+      { order: 4, label: "Hội nghị TW 7 tại Đình Bảng, Bắc Ninh 'chưa dứt khoát' (11/1940)" },
+      { order: 5, label: "Hội nghị TW 8 tại Cao Bằng, lập Mặt trận Việt Minh (5/1941)" }
+    ],
+    [
+      { order: 1, label: "Thực dân Pháp nổ súng đánh chiếm Sài Gòn - Chợ Lớn (23/9/1945)" },
+      { order: 2, label: "Trung ương ra Chỉ thị Kháng chiến kiến quốc (25/11/1945)" },
+      { order: 3, label: "Tổng tuyển cử bầu 333 đại biểu Quốc hội khóa I (6/1/1946)" },
+      { order: 4, label: "Ký Hiệp định Sơ bộ với Pháp tại Hà Nội (6/3/1946)" },
+      { order: 5, label: "Phát động Toàn quốc kháng chiến lúc 20 giờ (19/12/1946)" }
+    ],
+    [
+      { order: 1, label: "HN TW 6 khóa IV - Bước đột phá 1: 'Sản xuất bung ra' (8/1979)" },
+      { order: 2, label: "HN TW 8 khóa V - Bước đột phá 2: 'Giá - Lương - Tiền' (6/1985)" },
+      { order: 3, label: "HN Bộ Chính trị khóa V - Bước đột phá 3 quyết định đổi mới (8/1986)" },
+      { order: 4, label: "Đại hội VI khởi xướng đường lối đổi mới toàn diện (12/1986)" },
+      { order: 5, label: "Đại hội VII thông qua Cương lĩnh 1991 với 6 đặc trưng (6/1991)" }
+    ]
+  ];
+
+  let currentTlSet = 0;
+  let expectedTlOrder = 1;
+
+  function renderTimeline() {
+    expectedTlOrder = 1;
+    const set = [...timelineSets[currentTlSet]].sort(() => Math.random() - 0.5);
+    const pool = document.getElementById('tl-pool');
+    pool.innerHTML = '';
+    set.forEach((item) => {
+      const div = document.createElement('div');
+      div.className = 'tl-item';
+      div.innerHTML = `<span>🔹 ${item.label}</span><span class="tl-badge">Chạm để chọn</span>`;
+      div.onclick = () => onTlClick(div, item);
+      pool.appendChild(div);
+    });
+    document.getElementById('tl-feedback').innerText = "⏳ Hãy chạm vào sự kiện diễn ra SỚM NHẤT (Số 1)!";
+  }
+
+  function onTlClick(el, item) {
+    if (el.classList.contains('correct-order')) return;
+    const fb = document.getElementById('tl-feedback');
+    if (item.order === expectedTlOrder) {
+      el.classList.add('correct-order');
+      el.querySelector('.tl-badge').innerText = `✅ Mốc #${expectedTlOrder}`;
+      expectedTlOrder++;
+      addScore(15);
+      if (expectedTlOrder > 5) {
+        fb.innerText = "🎉 Xuất sắc! Dòng thời gian đã được nối liền hoàn hảo!";
+      } else {
+        fb.innerText = `✨ Chuẩn! Tiếp theo, sự kiện nào diễn ra ở vị trí #${expectedTlOrder}?`;
+      }
+    } else {
+      resetStreak();
+      fb.innerText = "❌ Sự kiện này diễn ra muộn hơn! Hãy tìm sự kiện xảy ra trước đó nhé!";
+    }
+  }
+
+  function nextTimelineSet() {
+    currentTlSet = (currentTlSet + 1) % timelineSets.length;
+    renderTimeline();
+  }
+
+  // ================= MODE 5: LUYỆN ĐỀ OLYMPIC =================
+  const QB = [
+    ["Nhân tố nào làm con người tách khỏi thế giới động vật?","Hoạt động sinh sản duy trì nòi giống","Lao động","Hoạt động tư duy phê phán","Những tác động của tự nhiên",1],
+    ["Trình độ của lực lượng sản xuất biểu hiện ở chỗ:","Trình độ công cụ lao động và trình độ người lao động","Trình độ tổ chức và phân công lao động xã hội","Trình độ ứng dụng khoa học vào sản xuất","Hiệu quả của nền kinh tế",0],
+    ["Tiêu chuẩn cơ bản của tiến bộ xã hội là:","Trình độ phát triển của khoa học kỹ thuật","Trình độ dân trí và mức sống cao","Trình độ phát triển của lực lượng sản xuất","Trình độ phát triển của đạo đức, pháp luật và tôn giáo",2],
+    ["Quy luật chuyển hóa từ lượng đổi dẫn đến chất đổi (và ngược lại) nói lên phương diện nào của sự phát triển?","Khuynh hướng","Cách thức","Nguồn gốc","Động lực",1],
+    ["Phạm trù “độ” trong quy luật Lượng - chất được hiểu như thế nào?","Sự biến đổi về chất mà lượng không đổi","Khoảng giới hạn trong đó sự thay đổi về lượng chưa làm thay đổi căn bản về chất","Sự biến đổi về chất và lượng","Khoảng giới hạn trong đó mọi thay đổi về lượng đều làm biến đổi chất",1],
+    ["Quan điểm “Ý thức là thực thể độc lập, là thực thể tư duy” thuộc lập trường nào?","Chủ nghĩa duy tâm","Chủ nghĩa duy vật siêu hình","Chủ nghĩa duy vật biện chứng","Nhị nguyên luận",0],
+    ["Sắp xếp các hình thức vận động từ thấp đến cao:","Sinh học - xã hội - vật lý - cơ học - hóa học","Vật lý - cơ học - hóa học - sinh học - xã hội","Cơ học - vật lý - hóa học - sinh học - xã hội","Vật lý - hóa học - cơ học - xã hội - sinh học",2],
+    ["Vì sao đứng im mang tính tương đối?","Vì chỉ xảy ra trong ý thức","Vì chỉ xảy ra trong một mối quan hệ nhất định, đối với một hình thức vận động xác định","Vì chỉ xảy ra trong một sự vật nhất định","Vì chỉ là quy ước của con người",1],
+    ["Theo quan điểm duy vật biện chứng, không gian và thời gian...","chỉ là cảm giác của con người","gắn liền với nhau và với vật chất vận động","tồn tại độc lập với vật chất vận động","tồn tại khách quan và tuyệt đối",1],
+    ["Ý thức là thuộc tính của...","vật chất sống","mọi dạng vật chất trong tự nhiên","động vật bậc cao có hệ thần kinh trung ương","một dạng vật chất có tổ chức cao nhất là bộ não con người",3],
+    ["Nguồn gốc xã hội của ý thức là gì?","Hoạt động lao động nặng nhọc và yêu cầu truyền đạt kinh nghiệm","Quá trình hoạt động lao động và giao tiếp ngôn ngữ của con người","Hoạt động giao tiếp ngôn ngữ","Hoạt động lao động cải tạo tự nhiên",1],
+    ["Yếu tố nào trong kết cấu của ý thức là cơ bản và cốt lõi nhất?","Niềm tin, ý chí","Tình cảm","Tri thức","Lý trí",2],
+    ["Theo phép biện chứng duy vật, nguồn gốc sâu xa gây ra mọi sự vận động, phát triển là:","Cái hích của Thượng đế","Mâu thuẫn bên trong sự vật, hiện tượng","Mâu thuẫn giữa lực lượng vật chất và tinh thần","Khát vọng vươn lên của vạn vật",1],
+    ["Cơ sở tạo nên mối liên hệ phổ biến của vạn vật trong thế giới là gì?","Tính thống nhất vật chất của thế giới","Sự thống trị của các lực lượng tinh thần","Lực vạn vật hấp dẫn","Sự tồn tại của thế giới",0],
+    ["Luận điểm nào sau đây đúng theo phép biện chứng duy vật?","Phát triển là xu hướng chung của sự vận động xảy ra trong thế giới vật chất","Phát triển là xu hướng vận động xảy ra bên ngoài sự ổn định của sự vật","Phát triển là xu hướng vận động cụ thể của các sự vật cá biệt","Phát triển là vận động luôn tiến bộ, không có thoái bộ",0],
+    ["Luận điểm nào đúng về cái riêng và cái chung?","Cái riêng tồn tại trong cái chung; thông qua cái riêng mà cái chung biểu hiện sự tồn tại của mình","Cái chung chỉ là một bộ phận của cái riêng; cái riêng không gia nhập hết vào cái chung","Chỉ cái riêng và cái chung mới chuyển hóa lẫn nhau","Cái riêng tồn tại độc lập và quyết định cái chung",0],
+    ["Trong quan hệ nhân quả, khẳng định nào sau đây SAI?","Nguyên nhân xuất hiện cùng với kết quả","Một nguyên nhân có thể sinh ra nhiều hay ít kết quả tùy điều kiện","Nguyên nhân có trước kết quả","Nguyên nhân sản sinh ra kết quả",0],
+    ["Luận điểm nào phù hợp với phép biện chứng duy vật?","Không phải hiện tượng nào cũng có nguyên nhân","Mối liên hệ nhân quả chỉ tồn tại khi ta nhận thức được nó","Ý thức con người đã sáng tạo ra mối liên hệ nhân quả","Ý thức con người không sáng tạo ra mối liên hệ nhân quả",3],
+    ["Muốn hoạt động thực tiễn thành công, chúng ta phải ... để vạch ra đối sách (tất nhiên - ngẫu nhiên)","dựa vào cả tất nhiên lẫn ngẫu nhiên","dựa vào ngẫu nhiên song không xem nhẹ tất nhiên","dựa vào tất nhiên mà không cần dựa vào ngẫu nhiên","dựa vào tất nhiên song không xem nhẹ cái ngẫu nhiên",3],
+    ["Muốn hoạt động thực tiễn thành công, phải chú ý đến ... (nội dung - hình thức)","nội dung","hình thức","hình thức song không bỏ qua nội dung","nội dung song không bỏ qua hình thức",3],
+    ["Khả năng là phạm trù triết học dùng để chỉ...","cái chưa chắc chắn có, nhưng chắc chắn sẽ có","cái không hợp quy luật, không bao giờ xuất hiện","cái hợp quy luật nhưng không thể thành hiện thực","cái chưa xuất hiện, song sẽ xuất hiện để thành hiện thực khi điều kiện hội đủ",3],
+    ["Luận điểm nào sau đây SAI? (về lượng)","Lượng là tính quy định vốn của sự vật","Lượng nói lên quy mô, trình độ phát triển của sự vật","Lượng phụ thuộc vào ý chí của con người","Lượng tồn tại khách quan gắn liền với sự vật",2],
+    ["Luận điểm nào sau đây SAI? (về chất)","Chất phụ thuộc vào cấu trúc của sự vật","Chất phụ thuộc vào yếu tố cấu thành sự vật","Chất chỉ phụ thuộc vào số lượng các yếu tố cấu thành","Chất phụ thuộc vào đặc tính cơ bản của sự vật",2],
+    ["[KTCT] Trong cùng thời gian lao động, số lượng sản phẩm tăng, giá trị một đơn vị hàng hóa không đổi, là kết quả của:","Tăng năng suất lao động","Tăng cường độ lao động","Cả hai","Tăng lao động giản đơn",1],
+    ["[KTCT] Điều kiện để có tái sản xuất mở rộng là:","Đổi mới máy móc, thiết bị","Tăng quy mô tư bản khả biến","Phải có tích lũy tư bản","Cải tiến tổ chức, quản lý",2],
+    ["[KTCT] Khối lượng giá trị thặng dư phản ánh gì?","Trình độ bóc lột","Phạm vi bóc lột","Quy mô bóc lột của tư bản đối với lao động làm thuê","Khả năng bóc lột",2],
+    ["[KTCT] Khi lạm phát phi mã xảy ra, hình thức sử dụng tiền nào có lợi nhất?","Cất ở nhà","Gửi ngân hàng","Mua hàng hóa hoặc vàng cất giữ","Đầu tư vào sản xuất",2],
+    ["[KTCT] Sản xuất hàng hóa xuất hiện từ khi nào?","Xã hội chiếm hữu nô lệ","Cuối xã hội nguyên thủy, đầu xã hội chiếm hữu nô lệ","Cuối chiếm hữu nô lệ, đầu phong kiến","Trong xã hội phong kiến",1],
+    ["[KTCT] Ngày lao động 8 giờ, m' = 100%. Nhà tư bản tăng ngày lao động lên 1 giờ, giá trị sức lao động giảm 25%. Tỷ suất giá trị thặng dư mới là:","150%","200%","250%","300%",1],
+    ["[KTCT] Trong tư liệu lao động, bộ phận quyết định năng suất lao động là:","Kết cấu hạ tầng","Đối tượng lao động","Công cụ lao động","Hệ thống bình chứa",2],
+    ["[KTCT] Hàng hóa có hai thuộc tính là do:","Tính chất hai mặt của lao động sản xuất hàng hóa quy định","Lao động cụ thể của từng cá nhân","Đặc tính tự nhiên của hàng hóa","Lao động của xã hội",0],
+    ["[KTCT] Quy luật giá trị là:","Quy luật kinh tế cơ bản của CNTB","Quy luật kinh tế cơ bản của nền sản xuất hàng hóa","Quy luật chung của nền kinh tế xã hội","Quy luật kinh tế tuyệt đối của CNTB",1],
+    ["[NQ XIV] Đại hội đại biểu toàn quốc lần thứ XIV của Đảng được tổ chức vào thời gian nào?","Từ ngày 6 đến 10/01/2026","Từ ngày 19 đến 23/01/2026","Từ ngày 15 đến 19/01/2026","Từ ngày 19 đến 23/02/2026",1],
+    ["[NQ XIV] Đại hội XIV đánh dấu bước chuyển quan trọng nào của đất nước?","Từ “phát triển nhanh” sang “phát triển bền vững”","Từ “đổi mới” sang “hội nhập”","Từ “tạo nền tảng phát triển” sang “phát triển bứt phá” trong kỷ nguyên mới","Từ “công nghiệp hóa” sang “kinh tế số”",2],
+    ["[NQ XIV] Phương châm Đại hội XIV của Đảng là:","Đoàn kết - Dân chủ - Kỷ cương - Đổi mới - Phát triển","Đoàn kết - Dân chủ - Đột phá - Kỷ cương - Phát triển","Đoàn kết - Dân chủ - Kỷ cương - Sáng tạo - Phát triển","Đoàn kết - Kỷ cương - Đột phá - Hội nhập - Phát triển",1],
+    ["[NQ XIV] Đại hội XIV xác định mấy “kiên định” về chính trị, tư tưởng?","2","3","4","5",2],
+    ["[NQ XIV] Trong 5 bài học kinh nghiệm sau 40 năm đổi mới, bài học nào thể hiện “bốn kiên định”?","Thứ nhất","Thứ hai","Thứ ba","Thứ năm",0],
+    ["[NQ XIV] Đến năm 2025, quy mô GDP của nước ta đạt trên bao nhiêu tỉ USD?","Trên 400 tỉ USD","Trên 450 tỉ USD","Trên 480 tỉ USD","Trên 514 tỉ USD",3],
+    ["[NQ XIV] Chỉ số hạnh phúc của nước ta năm 2025 xếp thứ mấy trên 143 quốc gia?","Thứ 56/143, tăng 23 bậc so với 2021","Thứ 46/143, tăng 33 bậc so với 2021","Thứ 36/143, tăng 43 bậc so với 2021","Thứ 66/143, tăng 13 bậc so với 2021",1],
+    ["[NQ XIV] Đến năm 2025, chỉ số phát triển con người (HDI) tăng mấy bậc, đạt bao nhiêu điểm?","Tăng 10 bậc, đạt 0,726 điểm","Tăng 14 bậc, đạt 0,766 điểm","Tăng 18 bậc, đạt 0,806 điểm","Tăng 8 bậc, đạt 0,706 điểm",1],
+    ["[NQ XIV] Tỉ lệ hộ nghèo đa chiều đến năm 2025 giảm xuống còn:","2,5%","3,0%","4,2%","1,3%",3],
+    ["[NQ XIV] Đến năm 2025, tỉ lệ đô thị hóa đạt:","38%","45%","52%","60%",1],
+    ["[NQ XIV] Tỉ lệ bao phủ bảo hiểm y tế năm 2025 đạt:","91,5%","93,0%","95,2%","97,4%",2],
+    ["[NQ XIV] Cuộc cách mạng về tổ chức bộ máy giảm được bao nhiêu % đầu mối trực thuộc Trung ương và % đơn vị hành chính cấp tỉnh?","24,9% và 36%","30% và 40%","34,9% và 46%","44,9% và 56%",2],
+    ["[NQ XIV] Động lực chính để xác lập mô hình tăng trưởng mới là:","Xuất khẩu và thu hút FDI","Tài nguyên thiên nhiên và lao động giá rẻ","Khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số quốc gia","Đầu tư công và tín dụng",2],
+    ["[NQ XIV] Điền: Kinh tế - xã hội, môi trường là (1); xây dựng Đảng là (2); văn hóa, con người là (3); quốc phòng, an ninh, đối ngoại là (4)","(1) then chốt, (2) trung tâm, (3) nền tảng, (4) trọng yếu, thường xuyên","(1) trung tâm, (2) then chốt, (3) nền tảng, (4) trọng yếu, thường xuyên","(1) trung tâm, (2) nền tảng, (3) then chốt, (4) trọng yếu, thường xuyên","(1) nền tảng, (2) then chốt, (3) trung tâm, (4) trọng yếu, thường xuyên",1],
+    ["[NQ XIV] Quan điểm chỉ đạo xác định vai trò của kinh tế tư nhân là:","Giữ vai trò chủ đạo","Là thành phần bổ trợ","Là một động lực quan trọng nhất của nền kinh tế","Chỉ là lực lượng hỗ trợ kinh tế nhà nước",2],
+    ["[NQ XIV] Mục tiêu phát triển đến năm 2030 là:","Nước phát triển, thu nhập cao","Nước đang phát triển có công nghiệp hiện đại, thu nhập trung bình cao","Nước công nghiệp theo hướng hiện đại","Nước thu nhập trung bình thấp",1],
+    ["[NQ XIV] Tầm nhìn đến năm 2045 là:","Nước đang phát triển, thu nhập trung bình cao","Nước có công nghiệp hiện đại","Nước phát triển, thu nhập cao, vững bước đi lên chủ nghĩa xã hội","Nước có thu nhập trung bình",2],
+    ["[Lịch sử] Người chỉ huy cuộc chiến đấu tại đại đồn Chí Hòa (Gia Định) chống Pháp năm 1861 là ai?","Trương Định","Tôn Thất Cát","Nguyễn Tri Phương","Võ Duy Ninh",2],
+    ["[Lịch sử] Sau thống nhất đất nước, cuộc bầu cử Quốc hội chung cả nước được tổ chức vào ngày:","30 tháng 4 năm 1976","25 tháng 4 năm 1976","25 tháng 5 năm 1976","30 tháng 5 năm 1976",1],
+    ["[Mác] Ngày 05/05/2018 kỷ niệm bao nhiêu năm ngày sinh của C.Mác?","150 năm","100 năm","200 năm","250 năm",2],
+    ["[Mác] Theo chủ nghĩa Mác - Lênin, lịch sử trước hết và căn bản là lịch sử hoạt động của:","Chính đảng","Vĩ nhân, lãnh tụ","Quần chúng nhân dân","Nhà nước",2],
+    ["[TTHCM] Thuật ngữ “Tư tưởng Hồ Chí Minh” được dùng theo nghĩa nào?", "Là tư tưởng của một cá nhân", "Là tư tưởng của lãnh tụ", "Là tư tưởng của một giai cấp, một dân tộc", "Là tất cả những vần đề trên", 2],
+    ["[TTHCM] Tìm đáp án sai: Khái niệm Tư tưởng Hồ Chí Minh mà Đại hội IX nêu lên bao gồm:", "Bản chất cách mạng, khoa học của Tư tưởng Hồ Chí Minh", "Nguồn gốc tư tưởng, lý luận của Tư tưởng Hồ Chí Minh", "Nội dung Tư tưởng Hồ Chí Minh", "Kết cấu tư tưởng Hồ Chí Minh", 3],
+    ["[TTHCM] Đối tượng của bộ môn Tư tưởng Hồ Chí Minh?", "Quá trình sản sinh tư tưởng", "Quá trình hiện thực hoá tư tưởng", "Quá trình sản sinh và hiện thực hoá tư tưởng", "Quá trình Đảng cộng sản vận dụng tư tưởng Hồ Chí Minh", 2],
+    ["[TTHCM] Bộ môn Tư tưởng Hồ Chi Minh có mấy nhiệm vụ khi nghiên cứu Tư tưởng Hồ Chí Minh?", "4 nhiệm vụ", "5 nhiệm vụ", "6 nhiệm vụ", "7 nhiệm vụ", 2],
+    ["[TTHCM] Tư tưởng Hồ Chí Minh có vị trí như thế nào trong hệ thống tư tưởng của Đảng Cộng sản Việt Nam?", "Là một bộ phận trong hệ thống tư tưởng của Đảng", "Là bộ phận quan trọng trong hệ thống tư tưởng của Đảng", "Là bộ phận rất quan trọng trong hệ thống tư tưởng của Đảng.", "Là bộ phận nền tảng, kim chỉ nam cho hành động của Đảng", 3],
+    ["[TTHCM] Có mấy nguyên tắc phương pháp luận khi nghiên cứu tư tưởng Hồ Chí Minh?", "4 nguyên tắc", "5 nguyên tắc", "6 nguyên tắc", "7 nguyên tắc", 2],
+    ["[TTHCM] Vấn đề nào mà giáo trình Tư tưởng Hồ Chí Minh chưa nêu khi nói về ý nghĩa học tập môn học này đối với sinh viên?", "Nâng cao năng lực tư duy lý luận và phương pháp công tác", "Bôi dưỡng phẩm chât đạo đức cách mạng và rèn luyện bản lĩnh chính trị", "Nâng cao lòng tự hào dân tộc, tự hào về Bác kính yêu", "Bồi dưỡng tình yêu thiên nhiên, ý thức bảo vệ môi trường", 3],
+    ["[TTHCM] Trong những cơ sở hình thành Tư tưởng Hồ Chí Minh, cơ sở nào là quan trọng nhất?", "Cơ sở khách quan", "Cơ sở chủ quan", "Cơ sở nào cũng quan trọng", "Không xác định được", 0],
+    ["[TTHCM] Trong những tiền đề lý luận hình thành Tư tưởng Hồ Chí Minh, tiêu đề nào quyết định bản chất cách mạng và khoa học của Tư tưởng Hồ Chí Minh?", "Tinh hoa văn hoá dân tộc", "Tinh hoa văn hoá nhân loại", "Chủ nghĩa Mác- Lênin", "Tất cả các tiền đề trên", 2],
+    ["[TTHCM] Tư tưởng nào của cụ Nguyễn Sinh Sắc có ảnh hưởng quyết định đến tư tưởng xây dựng một nhà nước của dân, do dân, vì dân của Hồ Chí Minh?", "Thương yêu người nghèo", "Lòng yêu nước", "Lòng căm thù bọn xâm lược", "Tư tưởng “thân dân”", 3],
+    ["[TTHCM] Thời kỳ Bác Hồ xác lập con đường cứu nước được tính từ:", "Trước năm 1911", "Từ 1911-1920", "Từ 1911-1930", "Từ 1920- 1941", 1],
+    ["[TTHCM] Ngày tháng năm nào, Nguyễn Tất Thành ra nước ngoài tìm đường cứu nước?", "6 – 5 – 1911", "5 – 6 – 1911", "15 – 6 – 1911", "25 – 6 – 1911", 1],
+    ["[TTHCM] Ai gợi ý cho Nguyễn Tất Thành về phương hướng tìm đường cứu nước qua câu nói sau đây: “Muốn đánh Pháp phải hiểu Pháp, muốn hiểu Pháp phải học tiếng Pháp”?", "Nguyễn Sinh Sắc", "Hoàng Thông", "Phan Bội Châu", "Nguyễn Quý Song", 3],
+    ["[TTHCM] “Đưa hổ cửa trước, rước beo cửa sau” là câu Bác Hồ nói về chủ trương cứu nước của ai?", "Nguyễn Trường Tộ", "Bùi Viện", "Phan Bội Châu", "Nguyễn Ảnh", 2],
+    ["[TTHCM] “Ỷ Pháp cầu tiến bộ” là câu Bác Hồ nói về chủ trương cứu nước của ai?", "Phan Văn Trường", "Phái chủ hoà trong triều đình nhà Nguyễn", "Phan Chu Trinh", "Nguyễn Thế Truyền", 2],
+    ["[TTHCM] Lý do chính của việc Nguyễn Ái Quốc đến Pháp?", "Để học nghề", "Để tìm hiểu văn minh Pháp", "Để vận động nhân dân Pháp ủng hộ cách mạng Việt Nam", "Vì nguồn gốc mọi đau khổ của nhân dân Việt Nam là ở tại “chính quốc”", 3],
+    ["[TTHCM] Nguyễn Ái Quốc sang Mỹ nhằm mục đích gì?", "Để tham quan", "Để học nghề", "Để nghiên cứu Tuyên ngôn độc lập của nước Mỹ", "Để nghiên cứu cách mạng dân chủ tư sản Mỹ", 3],
+    ["[TTHCM] “Cách mệnh Pháp cũng như cách mệnh Mỹ, nghĩa là cách mệnh tư bản, cách mệnh không đến nơi, tiếng là cộng hoà dân chủ, kì thực trong thì nó tước lục công nông, ngoài thì nó áp bức thuộc địa”. Câu nói trên được trích trong tác phẩm nào?", "Hồ Chí Minh toàn tập, t1", "Hồ Chí Minh toàn tập, t2", "Hồ Chí Minh toàn tập, t3", "Hồ Chí Minh toàn tập, t4", 1],
+    ["[TTHCM] Nguyễn Ái Quốc đến nước Anh nhằm mục đích gì?", "Nghiên cứu luật pháp của nước Anh", "Nghiên cứu cách mạng dân chủ tư sản Anh", "Để học nghề", "Để học tiếng Anh", 1],
+    ["[TTHCM] Nguyễn Ái Quốc gửi bản yêu sách của nhân dân An Nam tới hội nghị Véc-xây vào năm nào?", "Năm 1918", "Năm 1919", "Năm 1920", "Năm 1921", 1],
+    ["[TTHCM] “Luận cương của Lênin làm cho tôi rất phấn khởi, sáng tỏ, tin tưởng biết bao. Tôi vui mừng đến phát khóc lên. Ngồi một mình trong buồng mà tôi nói to lên như đang nói trước quần chúng đông đảo: “Hỡi đồng bào bị đoạ đầy đau khổ! Đây là cái cần thiết cho chúng ta, đây là con đường giải phóng chúng ta”. Câu trên được trích dẫn từ tác phẩm nào của Nguyễn Ái Quốc?", "Đời hoạt động của Hồ Chủ tịch", "Con đường dẫn tôi đến với chủ nghĩa Lênin", "Lê Nin vĩ đại", "Cách mạng tháng Mười và con đường giải phóng thuộc địa", 1],
+    ["[TTHCM] Luận cương của Lê Nin về các vấn đề dân tộc và thuộc địa đến với Người như một ánh sáng kì diệu nâng cao về chất tất cả những hiểu biết và tình cảm cách mạng mà Người hằng nung nấu”. Ai là tác giả của nhận định trên?", "Trường Chinh", "Phạm Văn Đồng", "Lê Duẩn", "Nguyễn Văn Linh", 0],
+    ["[TTHCM] “Luận cương của Lênin theo Người về quê Việt/ Đất nước còn xa nhưng hạnh phúc đã gần rồi”. Ai là tác giả của những câu thơ trên?", "Huy Cận", "Tố Hữu", "Chế Lan Viên", "Sóng Hồng", 2],
+    ["[TTHCM] Bác Hồ thành lập Hội những người Việt Nam yêu nước tại Pháp năm nào?", "1917", "1918", "1919", "1920", 0],
+    ["[TTHCM] Nguyễn Ái Quốc đọc bản “Sơ thảo lần thứ nhất những vấn đề về dân tộc và thuộc địa của Lê-Nin” vào thời gian nào?", "Năm 1919", "Năm 1920", "Năm 1921", "Năm 1922", 1],
+    ["[TTHCM] Thời kỳ hình thành tư tưởng cơ bản về cách mạng Việt Nam được tính từ:", "Năm 1921 đến năm 1930", "Năm 1931 đến năm 1945", "Năm 1945 đên năm 1954", "Năm 1954 đến năm 1969", 0],
+    ["[TTHCM] Tác phẩm “Bản án chế độ thực dân Pháp” của Bác Hồ được viết năm nào?", "Năm 1925", "Năm 1927", "Năm 1928", "Năm1929", 0],
+    ["[TTHCM] “Cương lĩnh đầu tiên của Đảng” do Bác Hồ khởi thảo vào năm nào?", "Năm 1929", "Năm 1930", "Năm 1931", "Năm 1932", 1],
+    ["[TTHCM] Sự phát triển của tình hình sau “vụ án chính cương sách lược vắn tắt” đã chứng tỏ ai đúng, ai sai lầm?", "Những người có quan điểm “tả khuynh” trong Quốc tế Cộng sản và trong Ban chấp hành lâm thời Đảng Cộng sản Đông Dương đúng", "Những người theo quan điểm “tả khuynh” sai lầm", "Hồ Chí Minh đúng", "Hồ Chí Minh sai", 2],
+    ["[TTHCM] Thử thách mà Hồ Chí Minh phải vượt qua trong giai đoạn 1930 – 1945 là gì?", "Bị đế quốc cầm tù", "Đời sống khổ cực của người cách mạng trong điều kiện hoạt động bí mật", "Quan điểm “tả khuynh” của Quốc tế Cộng sản thời kì đó", "Bị bệnh hiểm nghèo", 2],
+    ["[TTHCM] Năm nào Đảng ta trở lại với Tư tưởng Hồ Chí Minh trong Chính cương sách lược vắn tắt?", "1935", "1936", "1939", "1941", 2],
+    ["[TTHCM] Mốc thời gian nào đánh dấu mốc Nguyễn Ái Quốc trở về Tổ quốc sau ba mươi năm hoạt độngở nước ngoài?", "28 – 1 – 1940", "28 – 1 – 1941", "28 – 1 – 1942", "28 – 1 – 1943", 1],
+    ["[TTHCM] Thân phụ Hồ Chí Minh là Nguyễn Sinh Sắc. Ông sinh năm nào?", "1860", "1862", "1863", "1983", 1],
+    ["[TTHCM] Thân mẫu Hồ Chí Minh là bà Hoàng Thị Loan. Bà sinh năm nào?", "1865", "1866", "1868", "1870", 2],
+    ["[TTHCM] Huyện Bình Khê, nơi cụ Nguyễn Sinh Sắc - thân phụ của Hồ Chí Minh có thời gian làm tri huyện thuộc tỉnh nào?", "Quảng Nam", "Quảng Ngãi", "Bình Định", "Phan Thiết", 2],
+    ["[TTHCM] Thân phụ của Hồ Chí Minh là ông Nguyễn Sinh Sắc. Ông mất năm nào?", "1919", "1929", "1939", "1949", 1],
+    ["[TTHCM] Thân mẫu của Hồ Chí Minh là bà Hoàng Thị Loan. Bà mất năm nào?", "1891", "1901", "1911", "1921", 1],
+    ["[TTHCM] Thân mẫu của Hồ Chí Minh là bà Hoàng Thị Loan. Bà mất ở đâu?", "Nghệ An", "Hà Tĩnh", "Huế", "Bình Định", 3],
+    ["[TTHCM] Nguyễn Tất Thành học tại trường Quốc học Huế vào thời gian nào?", "Năm học 1905 – 1906", "Năm học 1906 – 1907", "Năm học 1907 – 1908", "Năm học 1911 – 1912", 2],
+    ["[TTHCM] Nguyễn Tất Thành lần đầu tiếp xúc với khẩu hiệu: “Tự do – Bình đẳng – Bác ái” vào năm nào?", "1904", "1905", "1908", "1917", 1],
+    ["[TTHCM] Nguyễn Tất Thành đã tham gia cuộc biểu tình chống thuế của nông dân tỉnh Thừa Thiên vào năm nào?", "5/1905", "5/1906", "5/1908", "5/1911", 2],
+    ["[TTHCM] Nguyễn Tất Thành đến Quy Nhơn học thêm tiếng Pháp từ thời gian nào?", "9/1907", "9/1909", "9/1911", "9/1912", 1],
+    ["[TTHCM] Nguyễn Tất Thành dạy học ở trường Dục Thanh thời gian nào?", "9/1908 đến 9/1909", "9/1910 đến 2/1911", "9/1910 đến 4/1912", "9/1910 đến 5/1912", 1],
+    ["[TTHCM] Nguyễn Tất Thành lúc ra đi tìm đường cứu nước bao nhiêu tuổi?", "19 tuổi", "20 tuổi", "21 tuổi", "24 tuổi", 2],
+    ["[TTHCM] Nguyễn Tất Thành nói: “Tôi muốn đi ra ngoài xem nước Pháp và các nước khác làm như thế nào, tôi sẽ trở về giúp đồng bào chúng ta”. Câu nói đó vào thời gian nào?", "6/1909", "7/1910", "6/1911", "6/1912", 2],
+    ["[TTHCM] Nguyễn Tất Thành ở Mỹ thời gian nào?", "1911 – 1912", "1912 – 1913", "1912 – 1914", "1913 – 1915", 0],
+    ["[TTHCM] Nguyễn Tất Thành ở Anh thời gian nào?", "1913 – 1914", "1914 – 1915", "1914 – 1916", "1914 – 1917", 3],
+    ["[TTHCM] Trong thời gian ở nước ngoài, Nguyễn Tât Thành đã làm những công việc gì?", "Phụ bếp, cào tuyết", "Đốt lò, bán báo", "Thợ ảnh, làm bánh", "Tất cả các công việc trên", 3],
+    ["[TTHCM] Nguyễn Ái Quốc dự Đại hội Tua tán thành Quốc tế 3, tham gia thành lập Đảng Cộng sản Pháp khi nào?", "12/1918", "12/1919", "12/1920", "12/1923", 2],
+    ["[TTHCM] Nguyễn Ái Quốc tham dự Đại hội lần thứ nhất của Đảng Cộng sản Pháp vào năm nào?", "1919", "1920", "1921", "1922", 2],
+    ["[TTHCM] Nguyễn Ái Quốc là người Việt Nam thứ mấy tham gia vào Đảng Cộng sản Pháp trong thời gian từ tháng 12/1920 đến tháng 6/1923?", "Thứ nhất", "Thứ hai", "Thứ ba", "Thứ tư", 0],
+    ["[TTHCM] Những tri thức mà Nguyễn Tất Thành có được về nền văn hoá Pháp là do Người đã từng đọc các tác phẩm của ai?", "Vôn Te", "Rút Xô", "Mông Tex Ki Ơ", "Tất cả những tác giả trên", 3],
+    ["[TTHCM] Nguyễn Ái Quốc vào Đảng Xã hội Pháp vào năm nào?", "1917", "1918", "1919", "1920", 2],
+    ["[TTHCM] Nguyễn Tất Thành lấy tên là Nguyễn Ái Quốc khi đang ở đâu?", "Anh", "Trung Quốc", "Pháp", "Liên Xô", 2],
+    ["[TTHCM] Nguyễn Tất Thành lấy tên là Nguyễn Ái Quốc vào thời gian nào?", "Khi Bác lên tàu từ Bến Nhà Rồng năm 1911", "Khi Bác tham gia sáng lập Đảng Cộng sản Pháp tại Đại hội Tua tháng 12/1920", "Tại Hội nghị Vécxay (Pháp) ngày 18/6/1919", "Khi Bác sang Liên Xô làm việc ở Ban Phương Đông của Quôc tế Cộng sản tháng 6/1923.", 2],
+    ["[TTHCM] “Luận cương của V. I. Lênin làm cho tôi rất cảm động, phấn khởi, sáng tỏ, tin tưởng biết bao. Tôi vui mừng đến phát khóc lên. Ngồi một mình trong buồng mà tôi nói to lên như đang nói trước quần chúng đông đảo: hỡi đồng bào bị đọa đày đau khổ. Đây là cái cần thiết cho chúng ta, đây là con đường giải phóng của chúng ta”. Nguyễn Ái Quốc nói câu ấy khi đang ở đâu?", "Luân Đôn, Anh", "Quảng Châu, Trung Quôc", "Paris, Pháp", "Máxcova, Liên Xô", 2],
+    ["[TTHCM] Thay mặt Hội những người Việt Nam yêu nước tại Pháp. Nguyễn Ái Quốc gửi đến Hội nghị Vécxay Bản yêu sách của nhân dân Việt Nam gồm mấy điểm?", "6 điểm", "8 điểm", "9 điểm", "12 điểm", 1],
+    ["[TTHCM] Vở kịch Con rồng tre được Nguyễn Ái Quốc viết nhân dịp vua Khải Định sang Pháp, đó là năm nào?", "Tháng 5/1922", "Tháng 5/1923", "Tháng 5/1925", "Tháng 5/1927", 0],
+    ["[TTHCM] Tác phẩm nào của Nguyễn Ái Quốc viết về sự kiện Khải Định sang Pháp năm 1922?", "Con rồng tre", "Lời than vãn của bà Trưng Trắc", "Vi hành", "Cả 3 tác phẩm trên", 3],
+    ["[TTHCM] Nguyễn Ái Quốc là đại biểu duy nhất của nông dân thuộc địa tại Quốc tế nông dân vào thời gian nào?", "10 – 1921", "10 – 1923", "10 – 1925", "10 – 1927", 1],
+    ["[TTHCM] Nguyễn Ái Quốc đến Liên Xô lần đầu năm nào?", "1921", "1922", "1923", "1924", 2],
+    ["[TTHCM] Để chuẩn bị thành lập Đảng Cộng sản Việt Nam, Nguyễn Ái Quốc đã từ Liên Xô về Trung Quốc năm nào?", "1923", "1924", "1925", "1927", 1],
+    ["[TTHCM] Nguyễn Ái Quốc đã tiếp xúc với nhóm “Tâm tâm xã” ở đâu?", "Hồng Công, Trung Quốc", "Thượng Hải, Trung Quốc", "Quảng Châu, Trung Quốc", "Đông Bắc Thái Lan", 2],
+    ["[TTHCM] Hồ Chí Minh đã cải tổ “Tâm Tâm xã” thành Hội Việt Nam cách mạng thanh niên vào năm nào?", "1923", "1924", "1925", "1927", 2],
+    ["[TTHCM] Nguyễn Ái Quốc đã thành lập Hội Việt Nam cách mạng thanh niên vào thời gian nào?", "6 – 1924", "6 – 1925", "6 – 1927", "6 – 1929", 1],
+    ["[TTHCM] Trong số các đồng chí sau, ai là người đã được gặp Hồ Chí Minh năm 1925?", "Trần Phú", "Hồ Tùng Mậu", "Phạm Văn Đồng", "Tôn Đức Thắng", 1],
+    ["[TTHCM] Nguyễn Ái Quốc đã thành lập Hội Việt Nam cách mạng thanh niên ở đâu?", "Hương Cảng (Trung Quốc)", "Quảng Châu (Trung Quốc)", "Thượng Hải (Trung Quốc)", "Cao Bằng (Việt Nam)", 1],
+    ["[TTHCM] Bản chất của chủ nghĩa tư bản “là một con đỉa có 1 cái vòi bám vào giai cấp vô sản ở chính quốc và 1 cái vòi khác bám vào giai cấp vô sản ở thuộc địa. Nếu muốn giết con vật ấy, người ta phải đồng thời cắt cả hai vòi. Nếu người ta chỉ cắt một vòi thôi thì cái vòi còn lại kia vẫn tiếp tục hút máu của giai cấp vô sản, con vật vẫn tiếp tục sống và cái vòi bị cắt đứt lại sẽ mọc ra”. Câu nói đó trích từ tác phẩm nào của Nguyễn Ái Quốc?", "Con rồng tre", "Bản án chế độ thực dân Pháp", "Đường cách mệnh", "V.I. Lênin và các dân tộc phương Đông", 1],
+    ["[TTHCM] Tại Quảng Châu (Trung Quốc) Nguyễn Ái Quốc đã mở nhiều lớp huấn luyện đào tạo cán bộ cho cách mạng Việt Nam, đó là vào những năm nào?", "1923-1924", "1924-1926", "1925-1927", "1927-1929", 2],
+    ["[TTHCM] Các bài giảng của Nguyễn Ai Quốc tại các lớp huấn luyện cán bộ được Bộ tuyên truyền của Hội liên hiệp các dân tộc bị áp bức tập hợp lại và xuất bản thành tác phẩm gì?", "Bản án chế độ thực dân Pháp", "Con Rồng tre", "VI. Lênin và Phương Đông", "Đường Kách mệnh", 3],
+    ["[TTHCM] “Công nông là gốc cách mệnh, còn học trò, nhà buôn nhỏ, địa chủ nhỏ..... là bầu bạn cách mệnh của công nông”. Nguyễn Ái Quốc viết câu đó trong tác phẩm nào?", "Bản án chế độ thực dân Pháp", "Nông dân Trung Quốc", "VI. Lênin và Phương Đông", "Đường cách mệnh", 3],
+    ["[TTHCM] “Trước hết phải có Đảng cách mệnh để trong thì vận động và tổ chức dân chúng, ngoài thì liên lạc với dân tộc bị áp bức và vô sản giai cấp mọi nơi.” Câu nói đó được Nguyễn Ái Quốc viết trong tác phẩm nào?", "Đường cách mệnh", "Sửa đổi lối làm việc", "Đây “công lý” của thực dân Pháp ở Đông Dương", "V.I.Lênin và Phương Đông", 0],
+    ["[TTHCM] Cuốn “Đường cách mệnh” tập hợp các bài giảng của Nguyễn Ái Quốc tại các khoá huấn luyện chính trị được xuất bản tại đâu?", "Pháp", "Liên Xô", "Việt Nam", "Trung Quốc", 3],
+    ["[TTHCM] “Tất cả các dân tộc trên thế giới đều sinh ra bình đẳng, dân tộc nào cũng có quyền sống, quyền sung sướng và quyền tự do”. Câu trên trích từ tác phẩm nào của Hồ Chí Minh?", "Bản án chế độ thực dân Pháp", "Chính cương sách lược vắn tắt", "Tuyên ngôn độc lập", "Đường cách mệnh", 2],
+    ["[TTHCM] Giá trị của Bản tuyên ngôn độc lập của nước Việt Nam mới được đánh giá là:", "Có giá trị bình thường", "Có giá trị lịch sử to lớn", "Có giá trị lịch sử đặc biệt", "Là bản thiên cổ hùng văn", 1],
+    ["[TTHCM] Đường lối kháng chiến mà Chủ tịch Hồ Chí Minh vạch ra là gì?", "Vừa kháng chiến, vừa kiến quốc", "Kháng chiến toàn dân, toàn diện", "Kháng chiến trường kỳ và tự lực cánh sinh", "Cả ba vấn đề trên", 3],
+    ["[TTHCM] Thực chất của vấn đề dân tộc thuộc địa trong tư tưởng Hồ Chí Minh là gì?", "Đòi quyền bình đẳng giữa các dân tộc", "Đòi quyền tự do dân chủ cho nhân dân", "Đòi quyền tự trị dân tộc dưới sự bảo hộ của ngoại bang", "Đấu tranh giải phóng dân tộc, thành lập nhà nước dân tộc độc lập, trong đó nhân dân là chủ thể tối cao của quyền lực nhà nước", 3],
+    ["[TTHCM] Theo Nguyễn Ái Quốc, cách mạng giải phóng dân tộc trong thời đại mới muốn giành được thắng lợi phải đi theo?", "Con đường cứu nước mà những bậc tiền bối đã đi", "Con đường giành độc lập của người Mỹ", "Con đường giành độc lập của nhân dân Ấn Độ", "Con đường cách mạng vô sản", 3],
+    ["[TTHCM] Cách mạng giải phóng dân tộc trong thời đại mới muốn giành được thắng lợi phải do?", "Giai cấp tư sản lãnh đạo", "Phải do một cá nhân xuất chúng lãnh đạo", "Do tầng lớp trí thức lãnh đạo", "Phải do Đảng Cộng sản lãnh đạo", 3],
+    ["[TTHCM] Cách mạng giải phóng dân tộc là sự nghiệp đoàn kêt của?", "Giai cấp công nhân với giai cấp nông dân", "Giai cấp công nhân với tầng lớp trí thức", "Giai cấp công nhân với các nhà công thương giàu có", "Của toàn dân trên cơ sở liên minh của giai cấp công nhân với giai cấp nông dân và trí thức", 3],
+    ["[TTHCM] Cách mạng giải phóng dân tộc muốn giành được thắng lợi, cần phải?", "Được tiến hành một cách chủ động và sáng tạo", "Dựa vào các nước có nền kinh tế phát triển cao", "Dựa vào thắng lợi của cách mạng ở “chính quốc”", "Dựa vào thắng lợi của cách mạng ở các nước thuộc địa khác", 0],
+    ["[TTHCM] Biện pháp hàng đầu để giành thắng lợi trong cách mạng giải phóng dân tộc phải?", "Dựa vào bạo lực vũ trang thuần tuý", "Dùng phương pháp đàm phán hoà bình", "Dùng phương pháp đàm phán kết hợp chiến tranh", "Sử dụng bạo lực cách mạng, kết hợp bạo lực chính trị của quần chúng với bạo lực vũ trang", 3],
+    ["[TTHCM] Theo tư tưởng Hồ Chí Minh, lực lượng giải phóng dân tộc, giải phóng giai cấp, giải phóng con người là:", "Đảng Cộng sản", "Các lực lượng cách mạng thế giới", "Khối đại đoàn kết dân tộc mà nòng cốt là liên minh công nông, trí thức", "Tất cả các lực lượng trên", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, ai là người đầu tiên đã đặt cơ sở cho một thời đại mới, thật sự cách mạng trong các nước thuộc địa?", "C.Mác", "Lê - Nin", "Hô-xê-mác-ti", "Mao Trạch Đông", 1],
+    ["[TTHCM] “Cách mạng là phá cái cũ đổi ra cái mới, cái xấu đổi ra cái tốt”. Câu trên được trích từ tác phẩm nào của Hồ Chí Minh?", "Sửa đổi lề lối làm việc", "Bản án chế độ thực dân Pháp", "Đường Cách mệnh", "Đạo đức cách mạng", 2],
+    ["[TTHCM] “Hỡi đồng bào yêu quý! Giờ quyết định cho vận mệnh của dân tộc ta đã đến. Toàn quốc đồng bào hãy đứng dậy, đem sức ta mà giải phóng cho ta”. Lời kêu gọi trên được trích từ tác phẩm nào?", "Quân lệnh số một của Uỷ ban khởi nghĩa toàn quốc", "Lời kêu gọi toàn quốc kháng chiến của Hồ Chủ Tịch", "Hiệu triệu tổng khởi nghĩa", "Tuyên ngôn độc lập", 1],
+    ["[TTHCM] “Trong lúc này quyền lợi của dân tộc là cao hơn hết thảy”. Kết luận trên là nội dung của hội nghị nào của Ban chấp hành Trung ương Đảng Cộng sản Đông Dương do Nguyễn Ái Quốc chủ trì?", "Hội nghị Trung ương 6 (11 – 1939)", "Hội nghị Trung ương 7 (11 – 1940)", "Hội nghị Trung ương 8 (11 – 1941)", "Hội nghị toàn quốc của Đảng ( 8 – 1945)", 2],
+    ["[TTHCM] Bác Hồ căn dặn bộ đội: “Ngày xưa các vua Hùng đã có công dựng nước. Ngày nay Bác cháu ta phải cùng nhau giữ lấy nước”. Đó là lời Bác dặn dò đơn vị nào trước khi vào tiếp quản thủ đô?", "Đại đoàn 312", "Đại đoàn 320", "Đại đoàn quân tiên phong", "Đơn vị bộ đội bảo vệ Bác", 2],
+    ["[TTHCM] “Không có gì quý hơn độc lập tự do” được Bác Hồ khẳng định thời gian nào?", "Năm 1945", "Năm 1954", "Năm 1966", "Năm 1968", 2],
+    ["[TTHCM] Chọn phương án trả lời đúng với Tư tưởng Hồ Chí Minh:", "Cách mạng giải phóng dân tộc giành thắng lợi đồng thời với cách mạng vô sản ở chính quốc", "Cách mạng giải phóng dân tộc giành thắng lợi sau cách mạng vô sản ở chính quốc", "Cách mạng giải phóng dân tộc có khả năng giành thắng lợi trước cách mạng vô sản ở chính quốc", "Thắng lợi của cách mạng giải phóng dân tộc phụ thuộc vào thắng lợi của cách mạng vô sản ở chính quốc", 2],
+    ["[TTHCM] Hồ Chí Minh đã dùng hình ảnh nào dưới đây để chỉ chủ nghĩa tư bản?", "Con bạch tuộc", "Đ. Con rồng tre", "Con đỉa 2 vòi", "Con voi", 2],
+    ["[TTHCM] Nội dung cốt lõi của tư tưởng Hồ Chí Minh là:", "Chủ nghĩa yêu nước", "Chủ nghĩa xã hội", "Chủ nghĩa nhân đạo chiến đấu", "Độc lập dân tộc gắn liền với chủ nghĩa xã hội", 3],
+    ["[TTHCM] “Hồ Chí Minh là người khởi xướng cuộc đấu tranh giải phóng của các dân tộc thuộc địa trong thế kỷ XX”. Ai đánh giá sự nghiệp của Hồ Chí Minh như trên?", "Đảng cộng sản Việt Nam", "Ủy ban bảo vệ hòa bình thế giới", "Hội chữ thập đỏ quốc tế", "Cơ quan văn hoá - giáo dục của Liên hợp quốc", 3],
+    ["[TTHCM] Chủ nghĩa dân tộc mà Hồ Chí Minh coi là động lực lớn của đất nước là chủ nghĩa dân tộc gì?", "Chủ nghĩa dân tộc nước lớn", "Chủ nghĩa dân tộc nhược tiểu", "Chủ nghĩa quốc gia", "Chủ nghĩa dân tộc chân chính", 3],
+    ["[TTHCM] Hồ Chí Minh đứng trên quan điểm nào để giải quyết vấn đề dân tộc?", "Quan điểm quốc gia dân tộc", "Quan điểm chủng tộc (huyêt thống, màu da, tiếng nói...)", "Quan điểm đại dân tộc", "Quan điểm giai câp công nhân", 3],
+    ["[TTHCM] “Chỉ có chủ nghĩa xã hội, chủ nghĩa Cộng sản mới giải phóng được các dân tộc bị áp bức và những người lao động trên thế giới khỏi ách nô lệ”. Câu trên được Bác phát biểu năm nào?", "Năm 1920", "Năm 1930", "Năm 1945", "Năm 1960", 3],
+    ["[TTHCM] “Nước được độc lập mà dân không được hưởng hạnh phúc, tự do thì độc lập cũng chẳng có nghĩa lý gì”. Luận điểm trên được trích dẫn từ đâu?", "Hồ Chí Minh toàn tập, t2", "Hồ Chí Minh toàn tập, t4", "Hồ Chí Minh toàn tập, t7", "Hồ Chí Minh toàn tập, t10", 3],
+    ["[TTHCM] Xác định đúng quan điểm của Hồ Chí Minh?", "Giải phóng giai cấp là tiền đề để giải phóng dân tộc", "Giải phóng con người là tiền đề đề giải phóng dân tộc", "Giải phóng dân tộc là tiền đề giải phóng giai cấp", "Giải phóng xã hội là tiền đề giải phóng giai cấp", 2],
+    ["[TTHCM] Trong lúc này, quyền lợi của bộ phận, của giai cấp phải đặt dưới sự sinh tử, sự tồn vong của quốc gia, dân tộc. Trong lúc này nếu không giải quyết được vấn đề dân tộc giải phóng, không đòi được độc lập tự do cho toàn thể dân tộc, thì chẳng những toàn thể quốc gia dân tộc còn chịu mãi kiếp ngựa trâu, mà quyền lợi của bộ phận, của giai cấp đến vạn năm cũng không đòi lại được”. Bác nói câu này năm nào?", "Năm 1945", "Năm 1948", "Năm 1960", "Năm 1941", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, mâu thuẫn chủ yếu trong xã hội thuộc địa phương Đông là gì?", "Mâu thuẫn giữa giai cấp công nhân với giai cấp tư sản dân tộc", "Mâu thuẫn giữa giai câp nông dân với địa chủ phong kiến", "Mâu thuẫn giữa công nhân, nông dân, trí thức với địa chủ phong kiến", "Mâu thuẫn giữa dân tộc bị áp bức với chủ nghĩa thực dân", 3],
+    ["[TTHCM] Đối tượng của cách mạng thuộc địa là:", "Giai cấp tư sản bản địa", "Địa chủ phong kiến", "Bọn phản động, tay sai ôm chân đế quốc", "Chủ nghĩa thực dân và bọn tay sai phản động", 3],
+    ["[TTHCM] Vấn đề cơ bản của cách mạng thuộc địa là:", "Ruộng đất cho nông dân", "Là vấn đề dân chủ xã hội", "Cải thiện dân sinh", "Độc lập dân tộc", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, ai là người đã đặt cơ sở đầu tiên cho một thời đại mới, thật sự cách mạng trong các nước thuộc địa?", "Các Mác", "V.I Lê Nin", "Xtalin", "Ăngghen", 1],
+    ["[TTHCM] Câu: “Chủ trương làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội Cộng sản” được trích từ bài viết nào của Hồ Chí Minh?", "Đường cách mệnh", "Chính cương vắn tắt của Đảng", "Sách lược văn tắt của Đảng", "Chương trình tóm tắt của Đảng", 1],
+    ["[TTHCM] Nguyễn Ái Quốc bị bắt ở Hồng Kông vào thời gian nào?", "6-1930", "6-1931", "6-1932", "6-1933", 1],
+    ["[TTHCM] Khi bị bắt, Nguyễn Ái Quốc mang thẻ căn cước có tên là gì?", "Lý Thụy", "Tống Văn Sơ", "Hồ Quang", "Thầu Chín", 1],
+    ["[TTHCM] Nguyễn Ái Quốc bị thực dân Anh giam giữ ở Hồng Kông trong thời gian nào?", "6/1931- 1/1932", "6/1931- 1/1933", "6/1931- 1/1934", "6/1931- 1/1935", 1],
+    ["[TTHCM] Ai là người đã có công lớn trong việc cứu Nguyễn Ái Quốc ra khỏi nhà tù của thực dân Anh ở Hồng Kông?", "Tô mát Xautôn (phó Thông độc Hồng Kông)", "Luật sư Lôdơbai (Lôdơbi)", "Luật sư Nôoen Piit", "Hồ Tùng Mậu", 1],
+    ["[TTHCM] Nguyễn Ái Quốc đã viết thư gửi một đồng chí ở Quốc tế Cộng sản yêu cầu được giao công việc sau một số năm không hoạt động kể từ khi bị bắt giam ở Hồng Kông. Bức thư đó viết năm nào?", "6/1935", "6/1938", "6/1939", "6/1941", 1],
+    ["[TTHCM] Hồ Chí Minh về nước trực tiếp lãnh đạo phong trào cách mạng từ ngày, tháng, năm nào?", "15-1-1941", "20-2-1940", "28-1-1941", "8-2-1841", 2],
+    ["[TTHCM] Hồ Chí Minh thí điểm xây dựng Mặt trận Việt Minh đầu tiên ở tỉnh nào?", "Thái Nguyên", "Tuyên Quang", "Cao Bằng", "Lạng Sơn", 2],
+    ["[TTHCM] Năm 1941, Nguyễn Ái Quốc viết một tác phẩm có câu mở đầu: “Dân ta phải biết sử ta. Cho tường gốc tích nước nhà Việt Nam”. Đó là tác phẩm:", "Đường kách mệnh", "Lịch sử nước ta", "Bài ca du kích", "Đạo đức cách mạng", 1],
+    ["[TTHCM] Tháng 12/1944, Hồ Chí Minh triệu tập một số cán bộ về Pác Bó (Cao Bằng) để phổ biến chủ trương thành lập Quân giải phóng. Ai là người đã được Hồ Chí Minh chỉ định đảm nhiệm công tác này?", "Vũ Anh", "Hoàng Văn Thái", "Võ Nguyên Giáp", "Phùng Chí Kiên", 2],
+    ["[TTHCM] Đội Việt Nam tuyên truyền giải phóng quân được thành lập lúc nào?", "20/12/1944", "22/12/1944", "30/12/1944", "15/5/1945", 1],
+    ["[TTHCM] “Dù phải đốt cháy cả dãy Trường Sơn cũng phải giành cho được độc lập” Câu nói đó của Hồ Chí Minh vào thời gian nào?", "Tháng 5 – 1941", "Tháng 8 – 1945", "Tháng 9 – 1945", "Tháng 12 – 1946", 1],
+    ["[TTHCM] Cuối tháng 7/1945, tại lán Nà Lừa, Hồ Chí Minh đã chỉ thị: “Lúc này thời cơ thuận lợi đã tới, dù hy sinh tới đâu, dù phải đốt cháy cả dãy Trường Sơn cũng phải cương quyết giành cho được độc lập”. Ai đã được Bác trực tiếp truyền đạt chỉ thị này?", "Phạm Văn Đồng", "Đặng Văn Cáp", "Võ Nguyên Giáp", "Hoàng Quốc Việt", 2],
+    ["[TTHCM] Đặc trưng Hồ Chí Minh khi Người tiếp cận chủ nghĩa xã hội là gì?", "Từ khát vọng giải phóng dân tộc", "Từ phương diện đạo đức", "Từ văn hóa", "Cả 3 vấn đề trên", 3],
+    ["[TTHCM] “Chủ nghĩa xã hội là lấy nhà máy, xe lửa, ngân hàng… làm của chung. Ai làm nhiều thì ăn nhiều, ai làm ít thi ăn ít, ai không làm thì không ăn, tất nhiên là trừ những người già cả, đau yếu và trẻ con”. Định nghĩa này nhấn mạnh lĩnh vực nào?", "Chính trị", "Xã hội", "Kinh tế", "Văn hóa", 2],
+    ["[TTHCM] Quan niệm khái quát của chủ tịch Hồ Chí Minh về chủ nghĩa xã hội là gì?", "Là chế độ chính trị do nhân dân lao động làm chủ", "Là chế độ xã hội có nền kinh tế phát triển gắn với sự phát triển của khoa học kỹ thuật", "Là chế độ không còn áp bức bóc lột, văn hóa, đạo đức phát triển cao", "Cả 3 vấn đề trên", 3],
+    ["[TTHCM] Trong quan niệm của chủ tịch Hồ Chí Minh, chủ nghĩa xã hội có mấy mục tiêu cơ bản?", "Hai mục tiêu", "Ba mục tiêu", "Bốn mục tiêu", "Năm mục tiêu", 1],
+    ["[TTHCM] Động lực quan trọng nhất của chủ nghĩa xã hội là gì?", "Tiền vốn", "Tài nguyên thiên nhiên", "Khoa học-kỹ thuật", "Con người lao động", 3],
+    ["[TTHCM] Trong quan niệm của Bác Hồ, chủ nghĩa xã hội là chế độ chính trị mà trong đó:", "Giai cấp công nhân là người làm chủ", "Giai cấp nông dân dân là người làm chủ", "Trí thức là người làm chủ", "Nhân dân lao động là người làm chủ", 3],
+    ["[TTHCM] Trong tư tưởng Hồ Chí Minh, nền kinh tế xã hội chủ nghĩa là nền kinh tế được tạo lập trên cơ sở đặc trưng nhất, đó là:", "Nền công nghiệp hiện đại", "Nền nông nghiệp hiện đại", "Nền công-nông nghiệp hiện đại", "Trên cơ sở công hữu về tư liệu liệu sản xuất là chủ yếu", 3],
+    ["[TTHCM] Theo quan điểm Hồ Chí Minh, trong thời kì quá độ, thành phần kinh tế được ưu tiên phát triển là:", "Kinh tế hợp tác xã", "Kinh tế tư bản tư nhân", "Kinh tế cá thể, tiểu chủ", "Kinh tế quốc doanh", 3],
+    ["[TTHCM] Quan niệm của chủ tịch Hồ Chí Minh về cách làm chủ nghĩa xã hội:", "Đem của dân, sức dân, tài dân làm lợi cho dân", "Quản lý nhà nước tập trung, bao cấp", "Phải dựa vào các nước xã hội chủ nghĩa", "Phải dựa vào các nước tiên tiến", 0],
+    ["[TTHCM] Theo Hồ Chí Minh, đâu là mâu thuẫn chủ yếu nhất trong thời kỳ quá độ ở nước ta?", "Mâu thuẫn giai cấp trong xã hội", "Mâu thuẫn giữa cách mạng và phản cách mạng", "Mâu thuẫn giữa yêu cầu phát triển cao của đất nước với thực trạng nghèo nàn, lạc hậu", "Cả 3 vấn đề trên", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, nguyên tắc phân phối chủ yếu trong chủ nghĩa xã hội là gì?", "Làm theo năng lực hưởng theo nhu cầu", "Làm theo năng lực hưởng theo lao động", "Phân phối bình quân", "Phân phối theo vốn và tài sản đóng góp", 1],
+    ["[TTHCM] Theo Hồ Chí Minh, đặc trưng nổi bật nhất về chính trị trong chủ nghĩa xã hội là gì?", "Nhà nước được xây dựng và hoạt động theo pháp luật", "Quyền lực nhà nước thuộc về nhân dân", "Chế độ công hữu về tư liệu sản xuất chủ yếu", "Đảng Cộng sản lãnh đạo", 1],
+    ["[TTHCM] Trong cải tạo xã hội chủ nghĩa, Hồ Chí Minh chủ trương đối xử với giai cấp tư sản dân tộc như thế nào?", "Xử bắn, xử tù họ", "Tịch thu tài sản của họ", "Coi họ là đối tượng nguy hiểm", "Cải tạo họ thành người lao động mới", 3],
+    ["[TTHCM] Đảng Cộng sản là sản phẩm của sự kết hợp giữa chủ nghĩa Mác và phong trào công nhân. Ai nói về quy luật ra đời của Đảng cộng sản như trên?", "C.Mác", "Lê-Nin", "Stalin", "Hồ Chí Minh", 1],
+    ["[TTHCM] Chủ nghĩa Mác – Lê Nin kết hợp với phong trào công nhân và phong trào yêu nước dẫn tới sự ra đời của Đảng Cộng sản Việt Nam. Câu trên trích từ tác phẩm nào của Chủ tịch Hồ Chí Minh?", "Đường cách mệnh", "Thường thức chính trị", "Diễn văn chính trị đọc tại Đại hội III", "Ba mươi năm hoạt động của Đảng", 3],
+    ["[TTHCM] Ai soạn thảo “Chánh cương văn tắt”, “Sách lược văn tắt”, “Chương trình, Điều lệ tóm tắt” của Đảng?", "Trịnh Đỉnh Cửu", "Trần Phú", "Lê Hồng Phong", "Nguyễn Ái Quốc", 3],
+    ["[TTHCM] Ai chủ trì hội nghị hợp nhất 3 tổ chức cộng sản của nước ta?", "Trịnh Đỉnh Cửu", "Trần Phú", "Nguyễn Ái Quốc", "Lê Hồng Phong", 2],
+    ["[TTHCM] Đảng Cộng sản Việt Nam do Hồ Chí Minh sáng lập và lãnh đạo, hoạt động vì lợi ích của ai?", "Vì lợi ích của dân tộc Việt Nam", "Vì lợi ích của bản thân Đảng", "Vì lợi ích của giai cấp công nhân", "Vì lợi ích của công nhân, nông dân, trí thức", 0],
+    ["[TTHCM] Đảng lãnh đạo là nhân tố có ý nghĩa thế nào đối với thắng lợi cách mạng nước ta?", "Có ý nghĩa quan trọng", "Có ý nghĩa rất quan trọng", "Có ý nghĩa quan trọng đặc biệt", "Có ý nghĩa quyết định hàng đầu thắng lợi của cách mạng nước ta", 3],
+    ["[TTHCM] Hồ Chí Minh diễn đạt như thế nào về vấn đề “Đảng của ai”?", "Đảng Lao động Việt Nam là Đảng của giai cấp công nhân và nhân dân lao động, nên nó phải là Đảng của dân tộc Việt Nam", "Đảng lao động là tổ chức cao nhất của giai cấp công nhân và nhân dân lao động, nên nó phải là Đảng của giai cấp cần lao và đại biểu lợi ích của cả dân tộc", "Đảng là đảng của giai cấp lao động, mà cũng là Đảng của toàn dân", "Các phương án trên đều đúng", 1],
+    ["[TTHCM] Vì sao số đông nhân dân Việt Nam coi Đảng Cộng sản Việt Nam là Đảng của mình?", "Vì Đảng tự nhận như thế", "Vì Đảng đang là lực lượng lãnh đạo đất nước", "Vì sách báo nói nhiều nên trở thành thói quen", "Vì Đảng hoạt động vì lợi ích của nhân dân", 3],
+    ["[TTHCM] Trong các thuật ngữ chỉ vai trò Đảng lãnh đạo xã hội mà Hồ Chí Minh thường dùng sau đây thì thuật ngữ nào phản ánh rõ nhất, chính xác nhất vai trò lãnh đạo của Đảng?", "Đảng nắm quyền", "Đảng lãnh đạo chính quyền", "Đảng cầm quyền", "Các thuật ngữ trên đều phản ánh rõ vai trò của Đảng", 2],
+    ["[TTHCM] Trong tư tưởng Hồ Chí Minh, là người lãnh đạo, Đảng phải có những phẩm chất gì?", "Tư cách, đạo đức, năng lực cần thiết", "Phải có khả năng làm cho dân tin, dân mến, dân phục, dân theo", "Đảng phải gắn bó mật thiết với nhân dân, nghe ý kiến của nhân dân, học nhân dân, chịu sự kiểm soát của nhân dân...", "Tất cả những phẩm chất trên", 3],
+    ["[TTHCM] Chọn đáp án sai trong những đáp án được rút ra từ mệnh đề sau: “Đảng ta vừa là người lãnh đạo, vừa là người đầy tớ thật trung thành của nhân dân”", "Đầy tớ là tôi tớ, tôi đòi, theo đuôi quần chúng", "Là tận tâm, tận lực phụng sự quần chúng", "Là việc gì có lợi cho dân thì phải hết sức làm, việc gì có hại cho dân thì phải hết sức tránh", "Là khổ trước thiên hạ, vui sau thiên hạ", 0],
+    ["[TTHCM] Theo Hồ Chí Minh, nền tảng tư tưởng của Đảng Cộng sản Việt Nam là:", "Tinh hoa văn hóa dân tộc Việt Nam", "Tinh hoa văn hóa nhân loại", "Là tinh hoa văn hoá dân tộc và tinh hoa văn hóa nhân loại", "Là chủ nghĩa Mác-Lênin", 3],
+    ["[TTHCM] Trong Tư tưởng Hồ Chí Minh, luận điểm: “Sự lãnh đạo của Đảng là nhân tố hàng đầu đưa cách mạng nước ta đến thắng lợi” là để:", "Xác định vị thế cầm quyền của Đảng", "Xác định mục đích của Đảng", "Xác định vai trò lãnh đạo của Đảng", "Xác định nhiệm vụ của Đảng", 2],
+    ["[TTHCM] Luận điểm: “Đảng Cộng sản là Đảng của giai cấp công nhân, của nhân dân lao động và của cả dân tộc” là nhằm:", "Xác định vai trò lãnh đạo của Đảng", "Xác định vị thế cầm quyền của Đảng", "Xác định chức năng, nhiệm vụ của Đảng", "Xác định quyền lực của Đảng", 2],
+    ["[TTHCM] Bản chất của Đảng cộng sản Việt Nam được thể hiện ở chỗ:", "Số lượng Đảng viên của Đảng", "Năng lực lãnh đạo của Đảng viên", "Nền tảng tư tưởng, đường lối lãnh đạo, nguyên tắc tổ chức của Đảng", "Số lượng Đảng viên là công nhân chiếm đa số trong Đảng", 2],
+    ["[TTHCM] Trong Tư tưởng Hồ Chí Minh, có mấy nội dung xây dựng Đảng?", "2 nội dung", "3 nội dung", "4 nội dung", "5 nội dung", 2],
+    ["[TTHCM] “Đảng muốn vững, phải có chủ nghĩa làm cốt, trong Đảng ai cũng phải hiểu, ai cũng phải theo chủ nghĩa ấy, Đảng mà không có chủ nghĩa cũng như người không có trí khôn, tàu không có bàn chỉ nam”. Chủ nghĩa mà Hồ Chí Minh nói ở đây là chủ nghĩa gì?", "Chủ nghĩa quốc gia - dân tộc", "Đ. Chủ nghĩa Tam dân", "Chủ nghĩa quốc tế", "Chủ nghĩa Mác-Lênin", 3],
+    ["[TTHCM] Trong xây dựng Đảng về chính trị, vấn đề nào là cốt yếu?", "Xây dựng và thực hiện Nghị quyết của Đảng", "Củng cố lập trường chính trị", "Nâng cao bản lĩnh chính trị của Đảng viên", "Xây dựng đường lối chính trị", 3],
+    ["[TTHCM] Trong Tư tưởng Hồ Chí Minh, có mấy nguyên tắc xây dựng Đảng?", "4 nguyên tắc", "5 nguyên tắc", "6 nguyên tắc", "7 nguyên tắc", 1],
+    ["[TTHCM] “Đảng ta là một Đảng cầm quyền, các đồng chí từ chi bộ đến Trung ương phải giữ gìn đoàn kết sự nhất trí trong Đảng như giữ gìn con ngươi của mắt mình”. Câu nói trên trích từ tác phẩm nào của Hồ Chí Minh?", "Diễn văn chính trị tại Đại hội III của Đảng", "Bài nói chuyện tại trường Nguyễn Ái Quốc Trung ương năm 1957", "Di chúc", "Bài nói chuyện với cán bộ cao cấp quân đội nhân dân Việt Nam", 2],
+    ["[TTHCM] Trong Tư tưởng Hồ Chí Minh, đặc trưng nhất của đạo đức cộng sản là gì ?", "Tình thương dành cho công nhân", "Tình thương dành cho nông nhân", "Tình thương dành cho con người", "Tinh thần tận hiến", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, đại đoàn kết dân tộc có ý nghĩa thế nào trong sự nghiệp cách mạng?", "Rất quan trọng", "Đặc biệt quan trọng", "Là vấn đề có ý nghĩa sách lược", "Là vấn đề chiến lược có ý nghĩa quyết định thắng lợi của cách mạng", 3],
+    ["[TTHCM] “Đoàn kết trong mặt trận Việt Minh, nhân dân ta đã làm cách mạng tháng 8 thành công, lập nên nước VNDCCH. Đoàn kết trong mặt trận Liên Việt, nhân dân ta đã kháng chiến thắng lợi, lập lại hoà bình ở Đông Dương, hoàn toàn giải phóng miền Bắc. Đoàn kết trong Mặt trận Tổ quốc Việt Nam, nhân dân ta đã giành được thắng lợi trong công cuộc khôi phục kinh tế, cải tạo XHCN và trong sự nghiệp xây dựng CNXH ở miền Bắc”. Câu trên trích ở văn kiện nào của Hồ chủ tịch?", "Hồ Chí Minh toàn tập, t8", "Hồ Chí Minh toàn tập, t9", "Hồ Chí Minh toàn tập, t10", "Hồ Chí Minh toàn tập, t12", 2],
+    ["[TTHCM] Mục đích của Đảng Lao động Việt Nam có thể gồm trong 8 chữ là: đoàn kết toàn dân, phụng sự Tổ Quốc. Hồ Chí Minh viết câu trên vào thời gian nào ?", "3/3/1950", "3/3/1951", "3/3/1952", "3/3/1953", 3],
+    ["[TTHCM] Chính sách đại đoàn kết dân tộc của Hồ Chí Minh có mấy nội dung ?", "1 nội dung", "2 nội dung", "3 nội dung", "4 nội dung", 1],
+    ["[TTHCM] “Sông to, biển rộng thì bao nhiêu nước cũng chứa được, vì độ lượng nó sâu. Cái chén nhỏ, cái đĩa cạn, thì một chút nước đã tràn đầy, vì độ lượng nó hẹp nhỏ. Người mà tự kiêu, tự mãn thì cũng như cai chén, cái đĩa cạn”. Câu nói trên của Bác Hồ có ngụ ý gì?", "Phê bình một số cán bộ Đảng viên kiêu căng, tự mãn", "Phê phán lối sống hẹp hòi, ích kỉ", "Giáo dục cán bộ, Đảng viên và quần chúng khoan dung, độ lượng với những người có khuyết điểm, lỗi lầm", "Tất cả các ý trên", 3],
+    ["[TTHCM] Lòng khoan dung độ lượng của Hồ Chí Minh đối với những người lầm đường lạc lối là sự biểu hiện:", "Một biểu hiện sách lược tạm thời", "Một thủ đoạn chính trị", "Một thủ đoạn mị dân", "Là một tư tưởng nhất quán, một mục tiêu của cách mạng mà suốt đời Bác theo đuổi", 3],
+    ["[TTHCM] Hình thức tổ chức của khối đại đoàn kết dân tộc là gì?", "Là Đảng cộng sản", "Là nhà nước của dân, do dân và vì dân", "Là các tổ chức hội đoàncủa quần chúng", "Là mặt trận dân tộc thống nhất", 3],
+    ["[TTHCM] Có mấy nguyên tắc xây dựng và hoạt động của mặt trận?", "3 nguyên tắc", "4 nguyên tắc", "5 nguyên tắc", "6 nguyên tắc", 1],
+    ["[TTHCM] Theo Tư tưởng Hồ Chí Minh, có mấy nội dung đoàn kết quốc tế?", "1 nội dung", "2 nội dung", "3 nội dung", "4 nội dung", 1],
+    ["[TTHCM] Theo Hồ Chí Minh, chúng ta cần đoàn kết với những đối tượng quốc tế nào?", "Phong trào cộng sản và phong trào công nhân thế giới", "Phong trào đấu tranh giải phóng dân tộc", "Lực lượng tiến bộ yêu chuộng hòa bình và tự do dân chủ", "Tất cả các đối tượng trên", 3],
+    ["[TTHCM] Theo tư tưởng Hồ Chí Minh, có mấy nguyên tắc xây dựng khối đoàn kết quốc tế?", "1 nguyên tắc", "2 nguyên tắc", "3 nguyên tắc", "4 nguyên tắc", 1],
+    ["[TTHCM] Đối với phong trào cộng sản và công nhân quốc tế, đối với các dân tộc trên thế giới, đối với các lực lượng tiến bộ trên thế giới, Hồ Chí Minh đã giương cao ngọn cờ gì để xây dựng khối đại đoàn kết quốc tế?", "Độc lập dân tộc gắn liền với chủ nghĩa xã hội", "Độc lập, tự do và quyền bình đẳng giữa các dân tộc", "Hoà bình trong công lý", "Cả 3 ngọn cờ trên", 3],
+    ["[TTHCM] Trong những khẩu hiệu tập hợp lực lượng dưới đây, khẩu hiệu nào do Hồ Chí Minh nêu lên?", "Vô sản tất cả các nước liên hiệp lại", "Vô sản các nước và các dân tộc bị áp bức trên thế giới đoàn kết lại", "Lao động tất cả các nước đoàn kết lại", "Nhân dân yêu chuộng hòa bình và công lý trên thế giới đoàn kết lại", 1],
+    ["[TTHCM] Theo Tư tưởng Hồ Chí Minh, trong xã hội ta, lực lượng nào có quyền lực cao nhất?", "Đảng Cộng sản Việt Nam", "Chính phủ nước Cộng hoà xã hội Chủ nghĩa Việt Nam", "Quốc hội nước Cộng hoà xã hội Chủ nghĩa Việt Nam", "Nhân dân Việt Nam", 3],
+    ["[TTHCM] Một trong những yêu sách 8 điểm gửi hội nghị Vec Xây mà Nguyễn Ái quốc đã nêu lên là:", "Đòi quyền bình đẳng cho các dân tộc", "Đòi quyền độc lập cho các dân tộc", "Đòi quyền tự trị dân tộc", "Đòi quyên bình đẳng về pháp lý cho nhân dân Đông Dương", 3],
+    ["[TTHCM] Văn kiện nào thể hiện rõ nhất tư tưởng dân chủ của chủ tịch Hồ Chí Minh?", "Chương trình của mặt trận Việt Minh", "Tuyên ngôn độc lập", "Hiến pháp năm 1946", "Hiến pháp năm 1959", 2],
+    ["[TTHCM] Văn kiện đầu tiên thể hiện chế độ dân chủ do chủ tịch Hồ Chí Minh thiết kế là:", "Tuyên ngôn độc lập", "Yêu sách 8 điểm gửi hội nghị Vec xây", "Hiến pháp năm 1946", "Chương trình hoạt động của Việt Minh", 3],
+    ["[TTHCM] Theo chủ tịch Hồ Chí Minh, để thực hiện được dân chủ trong xã hội, trước tiên cần thực hiện dân chủ trong tổ chức nào ?", "Dân chủ trong chính quyền các cấp", "Dân chủ trong Quốc hội", "Dân chủ trong các tổ chức đảng", "Dân chủ trong các đoàn thể nhân dân", 2],
+    ["[TTHCM] Chủ tịch Hồ Chí Minh đã dùng hình ảnh gì để nói về sức mạnh vạn năng của dân chủ?", "Cánh cửa", "Cái búa", "Cái liềm", "Cái chìa khóa", 3],
+    ["[TTHCM] Chủ tịch Hồ Chí Minh đã tham khảo mô hình nhà nước nào để xây dựng nhà nước của dân, do dân và vì dân?", "Nhà nước phong kiến", "Nhà nước tư bản", "Nhà nước Xô Viết", "Cả 3 kiểu nhà nước trên", 3],
+    ["[TTHCM] Quan điểm cơ bản nhất của chủ tịch Hồ Chí Minh về xây dựng nhà nước cách mạng là:", "Nhà nước pháp quyền Việt Nam", "Nhà nước công – nông", "Nhà nước chuyên chính vô sản", "Nhà nước do nhân dân lao động làm chủ", 3],
+    ["[TTHCM] Tư tưởng Hồ Chí Minh về xây dựng nhà nước cách mạng Việt Nam có mấy nội dung?", "2 nội dung", "3 nội dung", "4 nội dung", "5 nội dung", 2],
+    ["[TTHCM] Nội hàm nhà nước của dân bao gồm những vấn đề gì?", "Mọi quyền lực nhà nước đều thuộc về nhân dân", "Nhân dân có quyền kiểm soát mọi hoạt động của nhà nước", "Nhà nước phải có trách nhiệm đảm bảo quyền làm chủ của nhân dân", "Cả 3 vấn đề trên", 3],
+    ["[TTHCM] Đặc điểm cơ bản để nhận biết nhà nước ta mang bản chất giai cấp công nhân là gì?", "Nhà nước ta là sản phẩm của cuộc cách mạng do giai cấp công nhân lãnh đạo", "Mục tiêu hàng đầu của nhà nước ta là mang lại và bảo vệ lơi ích của giai cấp công nhân", "Nhà nước ta quản lý, điều hành xã hội theo định hưỡng xã hội chủ nghĩa", "Nhà nước ta do Đảng Cộng sản lãnh đạo", 3],
+    ["[TTHCM] Đảng lãnh đạo nhà nước bằng phương thức nào ?", "Bằng đường lối chủ trương để nhà nước thể chế hóa bằng pháp luật", "Bằng hoạt động của tổ chức Đảng và Đảng viên trong các cơ quan nhà nước", "Bằng công tác kiểm tra của Đảng đối với các hoạt động của nhà nước", "Cả 3 vấn đề trên", 3],
+    ["[TTHCM] Tính nhân dân, tính dân tộc của nhà nước ta thể hiện ở nội dung nào ?", "Nhà nước ta ra đời là kết quả của cuộc chiến tranh lâu dài của các thế hệ người VN", "Nhà nước ta bảo vệ lợi ích của các tầng lớp nhân dân, lấy lợi ích của dân tộc làm cơ bản", "Nhà nước ta dc dân tộc giao phó để điều hành đất nước trong kháng chiến và xây dựng đất nước trong thời bình", "Cả 3 nội dung trên", 3],
+    ["[TTHCM] “Cải cách nền pháp lý ở Đông Dương bằng cách làm cho người bản xứ cũng được quyền hưởng những bảo đảm về mặt pháp luật như người châu Âu, thay thế chế độ ra các sắc lệnh bằng chế độ ra các đạo luật”. Câu trên trích từ tác phẩm nào của Bác Hồ?", "Bản án chế độ thực dân Pháp", "Đường cách mệnh", "Yêu sách gửi hội nghị Vec Xây", "Báo “Người cùng khổ”", 2],
+    ["[TTHCM] Nội dung quan niệm của chủ tịch Hồ Chí Minh về một nhà nước có hiệu lực pháp lý mạnh mẽ ?", "Xây dựng một nhà nước hợp pháp hợp hiến", "Quản lý xã hội bằng pháp luật và đưa pháp luật vào cuộc sống", "Xây dựng đội ngũ công chức đủ đức đủ tài", "Tất cả các nội dung trên", 3],
+    ["[TTHCM] Để có một nhà nước hợp pháp, hợp hiến, việc làm đầu tiên của Hồ Chí Minh sau CMT8 năm 1945 là gì ?", "Thiết kế mô hình nhà nước cách mạng", "Lựa chọn sắp xếp cán bộ", "Tổ chức tổng tuyển cử trong cả nước", "Kêu gọi thế giới công nhận chính quyền mới", 2],
+    ["[TTHCM] Mục đích của tổng tuyển cử trong cả nước theo chế độ phổ thông đầu phiếu là gì ?", "Để nhà nước cách mạng có cơ sở pháp lý vững chắc trong quan hệ với quân đồng minh", "Để có mối quan hệ quốc tế bình đẳng về mặt nhà nước", "Để có thể thiết lập một cơ chế quyền lực hợp pháp theo đúng thông lệ quốc tế", "Tất cả các phương án trên đều đúng", 3],
+    ["[TTHCM] Quốc hội đầu tiên của nước Việt Nam mới họp phiên đầu tiên vào thời gian nào ?", "2/3/1945", "2/3/1946", "2/3/1947", "2/3/1948", 1],
+    ["[TTHCM] Ai là chủ tịch chính phủ đầu tiên của nước Việt Nam mới ?", "Huỳnh Thúc Kháng", "Phạm Văn Đồng", "Hồ Chí Minh", "Tôn Đức Thắng", 2],
+    ["[TTHCM] Ai là trưởng ban dự thảo hiến pháp của nước Việt Nam mới ?", "Trường Chinh", "Luật sư Phan Anh", "Phan Kế Toại", "Hồ Chí Minh", 3],
+    ["[TTHCM] Để pháp luật được thực thi nghiêm túc, cần có những điều kiện gì ?", "Nâng cao dân trí", "Giáo dục pháp luật cho nhân dân", "Cán bộ Đảng viên phải nêu gương chấp hành pháp luật", "Tất cả các điều kiện trên", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, trong thực thi pháp luật, cần chú trọng điều gì nhất ?", "Coi pháp luật là độc tôn", "Đề cao công lý", "Đề cao yếu tố tình cảm hơn pháp luật", "Coi trọng cả 2 mặt lý và tình", 3],
+    ["[TTHCM] Theo Hồ Chí Minh xây dựng đội ngũ công chức nhà nước theo những tiêu chuẩn nào ?", "Tuyệt đối trung thành với cách mạng, liên hệ mật thiết với nhân dân", "Giỏi chuyên môn nghiệp vụ", "Dám phụ trách quyết đoán, dám chịu trách nhiệm, thắng không kiêu bại không nản", "Tất cả các tiêu chuẩn trên", 3],
+    ["[TTHCM] Theo Hồ Chí Minh muốn xây dựng nhà nước trong sạch vững mạnh cần chống những căn bệnh nào ?", "Đặc quyền, đặc lợi", "Tham ô lãng phí quan liêu", "Tư túng, chia rẽ, kiêu ngạo", "Tất cả những căn bệnh trên", 3],
+    ["[TTHCM] Hồ Chí Minh trình bày khái niệm văn hóa năm nào ?", "8/1941", "8/1942", "8/1943", "8/1944", 2],
+    ["[TTHCM] Định nghĩa văn hóa của Hồ Chí Minh đã khắc phục được những quan niệm phiến diện nào?", "Coi văn hóa là hiện tượng thuần túy tinh thần", "Đồng nhất văn hóa với văn học nghệ thuật", "Đồng nhất văn hóa với học vấn", "Tất cả các câu hỏi trên", 3],
+    ["[TTHCM] Nội dung nền văn hóa mới, theo quan niệm của Hồ Chí Minh gồm mấy vấn đề?", "3 vấn đề", "4 vấn đề", "5 vấn đề", "6 vấn đề", 2],
+    ["[TTHCM] Hồ Chí Minh quan niệm văn hóa phải ở trong chính trị và kinh tế. Điều đó có nghĩa là?", "Văn hóa phải phục vụ chính trị", "Văn hóa phải thúc đẩy kinh tế phát triển", "Kinh tế chính trị cũng phải có tính văn hóa", "Tất cả các vấn đề trên", 3],
+    ["[TTHCM] Trong quan niệm của Chủ tịch Hồ Chí Minh, nền văn hóa mới có mấy tính chất?", "2 tính chất", "3 tính chất", "4 tính chất", "5 tính chất", 1],
+    ["[TTHCM] “Văn hoá phục vụ ai? Cố nhiên, chúng ta phải nói là phục vụ công nông binh, tức là phục vụ đại đa số nhân dân”. Câu trên trích từ tác phẩm nào của chủ tịch Hồ Chí Minh?", "Hồ Chí Minh toàn tập, t7", "Hồ Chí Minh toàn tập, t8", "Hồ Chí Minh toàn tập,t9", "Hồ Chí Minh toàn tập,t10", 2],
+    ["[TTHCM] Tính khoa học của nền văn hóa đối lập với những vấn đề gì trong văn hóa?", "Phản tiến bộ", "Quan điểm duy tâm", "Quan niệm thần bí, mê tín , dị đoan", "Tất cả những vấn đề nói trên", 3],
+    ["[TTHCM] Theo quan niệm của Hồ Chí Minh, nền văn hóa mới có mấy chức năng?", "1 chức năng", "2 chức năng", "3 chức năng", "4 chức năng", 2],
+    ["[TTHCM] Nội dung chức năng của văn hóa theo quan niệm của Hồ Chí Minh là gì?", "Bồi dưỡng tư tưởng đúng đắn và tình cảm cao đẹp", "Nâng cao dân trí", "Bồi dưỡng phẩm chất, phong cách và lối sống đẹp, hướng con người đến chân thiện mỹ", "Tất cả các nội dung trên", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, văn hóa gồm mấy lĩnh vực?", "2 lĩnh vực", "3 lĩnh vực", "4 lĩnh vực", "5 lĩnh vực", 1],
+    ["[TTHCM] Hồ Chí Minh chỉ ra những hạn chế nào của nền giáo dục phong kiến?", "Từ chương kinh viện", "Xa rời thực tế", "Bất bình đẳng, trọng nam, khinh nữ", "Tất cả những hạn chế trên", 3],
+    ["[TTHCM] Hồ Chí Minh đánh giá cao nhất yếu tố nào trong giá trị văn hóa dân tộc?", "Ý thức đoàn kết cộng đồng", "Yêu lao động", "Lòng yêu nước", "Lòng thương người", 2],
+    ["[TTHCM] Trong tư tưởng Hồ Chí Minh, đạo đức cách mạng có vai trò gì?", "Là nền tảng lý luận của người cách mạng", "Là phương châm hành động của người cách mạng", "Là cái gốc, là nền tảng của người cách mạng", "Là lẽ sống của người cách mạng", 2],
+    ["[TTHCM] Có mấy nguyên tắc xây dựng đạo đức mới theo Tư tưởng Hồ Chí Minh?", "2 nguyên tắc", "3 nguyên tắc", "4 nguyên tắc", "5 nguyên tắc", 1],
+    ["[TTHCM] Con người Việt Nam trong thời đại mới cần mấy phẩm chất đạo đức theo Tư tưởng Hồ Chí Minh?", "3 phẩm chất", "4 phẩm chất", "5 phẩm chất", "6 phẩm chất", 1],
+    ["[TTHCM] Cũng như sông có nguồn thì mới có nước, không có nguồn thì sông cạn. Cây phải có gốc, không có gốc thì cây héo. Người cách mạng phải có đạo đức, không có đạo đức thì tài giỏi mấy cũng không lãnh đạo được nhân dân”. Câu trên trích từ tác phẩm nào?", "Đường cách mệnh", "Chính cương sách lược vắn tắt", "Di chúc", "Đạo đức cách mạng", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, trong tình hình thực tế, yếu tố nào của chủ nghĩa xã hội có sức hấp dẫn đặc biệt?", "Lý tưởng cao đẹp", "Mức sống vật chất dồi dào", "Những giá trị đạo đức cao đẹp", "Tư tưởng tự do được giải phóng", 2],
+    ["[TTHCM] Nội dung của lòng trung với nước, hiếu với dân trong tư tưởng Hồ Chí Minh?", "Suốt đời phấn đấu cho Đảng, cho cách mạng", "Thương dân, tin dân, dựa vào dân", "Dựa vào dân, coi dân là gốc của nước", "Tất cả các nội dung trên", 3],
+    ["[TTHCM] “Trời có 4 mùa Xuân, Hạ, Thu, Đông/ Đất có 4 phương Đông, Tây, Nam, Bắc/ Thiếu một mùa thì không thành trời/ Thiếu một phương thì không thành đất/ Thiếu một đức thì không thành người”. Những câu trên trích từ tác phẩm nào của Hồ chủ tịch?", "Đạo đức cách mạng", "Nâng cao đạo đức cách mạng, quyets sạch chủ nghĩa cá nhân", "Bài nói chuyện tại trường Đại học nhân dân Việt Nam năm 1956", "Bài nói chuyện tại Đại học Bách khoa Hà Nội", 2],
+    ["[TTHCM] “Khi ngủ ai cũng như lương thiện/ Tỉnh dậy phân ra kẻ dữ, hiền/ Hiền, dữ đâu phải là tính sẵn/ Phần nhiều do giáo dục mà nên”. Ai là tác giả của bài thơ trên?", "Khổng Tử", "Lý Bạch", "Văn Thiên Tường", "Hồ Chí Minh", 3],
+    ["[TTHCM] Hồ Chí Minh cho rằng, muốn xây dựng nền đạo đức mới, phải tuân thủ những nguyên tắc nào?", "Nói đi đôi với làm", "Xây đi đôi với chống", "Tự rèn luyện đạo đức", "Tất cả các nguyên tắc trên", 3],
+    ["[TTHCM] “Nói chung thì các dân tộc phương Đông đều giàu tình cảm, đối với họ 1 tấm gương sống còn có giá trị hơn một trăm bài diễn văn tuyên truyền”. Câu trên trích từ tác phẩm nào của Hồ chủ tịch?", "Hồ Chí Minh toàn tập, t1", "Hồ Chí Minh toàn tập, t2", "Hồ Chí Minh toàn tập, t3", "Hồ Chí Minh toàn tập, t4", 0],
+    ["[TTHCM] “Đạo đức cách mạng không phải ở trên trời sa xuống. Nó do đấu tranh, rèn luyện bền bỉ hàng ngày mà phát triển và củng cố. Cũng như ngọc càng mài càng sáng, vàng càng luyện càng trong”. Câu trên được trích từ tác phẩm nào?", "Hồ Chí Minh toàn tập, t7", "Hồ Chí Minh toàn tập, t8", "Hồ Chí Minh toàn tập, t9", "Hồ Chí Minh toàn tập, t10", 2],
+    ["[TTHCM] Sinh viên cần học những gì ở đạo đức Hồ Chí Minh?", "Học trung với nước, hiếu với dân, cần kiệm, liêm chính", "Học đức tin vào sức mạnh nhân dân, luôn nhân ái, vị tha, khoan dung độ lượng, nhân hậu với con người", "Học tấm gương về ý chí và nghị lực tinh thần to lớn, quyết tâm vượt qua mọi thử thách, gian nguy để đạt được mục đích cuộc sống", "Tất cả những phẩm chất trên", 3],
+    ["[TTHCM] Hồ Chí Minh nhìn nhận con người trên những bình diện nào?", "Con người được nhìn nhận theo một chỉnh thể đa chiều", "Con người cụ thể, lịch sử", "Bản chất con người mang tính xã hội", "Tất cả các bình diện trên", 3],
+    ["[TTHCM] Trên bình diện chỉnh thể, đa chiều, con người trong quan niệm của Hồ Chí Minh là sự thống nhất giữa:", "Tâm lưc, thể lực và các hoạt động của nó", "Thống nhất trong đa dạng: đa dạng trong quan hệ xã hội, đa dạng trong tính cách, khát vọng, phẩm chất, hoàn cảnh xuất thân, điều kiện sống, làm việc…", "Thống nhất giữa 2 mặt thiện, ác, tốt xấu, hay dở, mặt xã hội và bản năng sinh vật", "Tất cả các vấn đề nói trên", 3],
+    ["[TTHCM] Theo quan niệm của Hồ Chí Minh, trong sự nghiệp cách mạng nói chung và trong xây dựng phát triển Chủ nghĩa xã hội nói riêng, vị trí của CON NGƯỜI phải đặt ở chỗ nào trong quá trình phát triển?", "Đầu tiên", "Sau cùng", "Vừa đầu tiên vừa sau cùng của quá trình phát triển", "Vị trí trung tâm của quá trình phát triển", 3],
+    ["[TTHCM] Bài thơ sau của tác giả nào: “Gạo đem vào giã bao đau đớn/ Gạo giã xong rồi trắng tựa bong/ Sống ở trên đời người cũng vậy/ Gian nam rèn luyện ắt thành công”", "Sóng Hồng", "Lê Đức Thọ", "Xuân Thủy", "Hồ Chí Minh", 3],
+    ["[TTHCM] “Những tư tưởng của Người là hiện thân của những khát vọng của các dân tộc trong việc khẳng định bản sắc dân tộc của mình và tiêu biểu cho việc thúc đẩy sự hiểu biết lẫn nhau”. Ai đã nhận định về Bác Hồ như vậy?", "Đảng Cộng Sản Việt Nam", "Ủy ban bảo vệ hòa bình thế giới", "UNESCO", "Hội nhân quyền quốc tế", 2],
+    ["[TTHCM] “Nước mất mà không biết là BẤT TRI, biết mà không chiến đấu cứu nước là BẤT TRUNG, chiến đấu mà không quên mình vì nước là BẤT DŨNG”. Ai nói với Nguyễn Tất Thành câu trên?", "Nguyễn Sinh Sắc", "Thầy giáo Vương Thúc Quý", "Thầy giáo Hoàng Thông", "Thầy Lê Văn Miến", 3],
+    ["[TTHCM] Ai là người Việt Nam đầu tiên khi mất được Bác Hồ viết văn tế?", "Hồ Tùng Mậu – cán bộ cao cấp của Đảng", "Phùng Chí Kiên –cán bộ quận sự cấp cao của quân đội ta", "Nguyễn Thị Thanh – chị gái của bác", "Một nữ hội viên bình thường của hội phụ nữ cứu quốc tỉnh Cao Bằng", 3],
+    ["[TTHCM] “Ở trong xã hội, muốn thành công trong sự nghiệp phải có 3 điều kiện “thiên thời, địa lợi, nhân hoà”. Ba điều kiện ấy đều quan trọng cả nhưng thiên thời không quan trọng bằng địa lợi, mà địa lợi không quan trọng bằng nhân hoà. Hồ Chí Minh đã nói câu trên vào thời điểm nào?", "Hội nghị quân sự toàn quốc lần thứ 2", "Hội nghị toàn quốc lần thứ 3", "Hội nghị quân sự toàn quốc lần thứ 4", "Hội nghị quân sự toàn quốc lần thứ 5", 3],
+    ["[TTHCM] “Không phải tôi đã cứu sống Chủ tịch Hồ Chí Minh, mà chính chủ nghĩa nhân đạo của Người đã cứu Người, vì chủ nghĩa nhân đạo của Người nên các bạn của tôi ở Hạ Môn, Hồng Công và cả trên nước Anh cũng nhiệt tình giúp tôi giải thoát cho Người”. Luật sư Lu Dơ Bai đã nói câu trên vào thời gian nào?", "1931, Khi Bác Hồ bị giam cầm ở Hương Cảng", "1945, khi cách mạng tháng 8 thành công", "1960, khi luật sư sang làm khách của Chính phủ", "1972, khi hồi kí của luật sư được xuất bản", 2],
+    ["[TTHCM] Theo tư tưởng Hồ Chí Minh, trong cách mạng xã hội chủ nghĩa, động lực nào quan trọng và quyết định nhất?", "Tiền vốn", "Tài nguyên thiên nhiên", "Người lao động", "Khoa học- kỹ thuật", 2],
+    ["[TTHCM] Luận điểm “học để làm việc, làm người, làm cán bộ. Học để phụng sự nhân dân và tổ quốc” là của ai?", "C.Mác", "V.Lê-nin", "Hồ Chí Minh", "Stalin", 2],
+    ["[TTHCM] Theo Hồ CHí Minh, đạo đức con người thể hiện ở mối quan hệ nào?", "Trong quan hệ với công việc", "Trong quan hệ với người khác", "Trong quan hệ với bản thân mình", "Cả 3 mối quan hệ trên", 3],
+    ["[TTHCM] Các định nghĩa dưới đây, định nghĩa nào không phải của Hồ Chí Minh?", "Chữ ‘người” theo nghĩa hẹp là gia đình, anh em, họ hàng, bạn bè", "Chữ “người” theo nghĩa rộng là đồng bào cả nước", "Rộng hơn nữa là cả loài người", "Là tổng hòa các mối quan hệ xã hội", 3],
+    ["[TTHCM] “Việc gì có lợi cho dân, ta phải hết sức làm, việc gì có hại cho dân, ta phải hết sức tránh”. Câu trên trích từ bài viết nào của Hồ Chí Minh?", "Đường cách mệnh", "Sửa đổi lề lối làm việc", "Đạo đức cách mạng", "Thư gửi ủy ban nhân dân các kỳ, các tỉnh, huyện và làng 17-10-1945", 3],
+    ["[TTHCM] Nguyễn Ái Quốc làm giảng viên ở trường đại học Phương Đông vào thời gian nào?", "1 – 4 – 1936", "1 – 4 – 1937", "1 – 4 – 1938", "1 – 4 – 1939", 1],
+    ["[TTHCM] Số thẻ học viên của Nguyễn Ái Quốc ở trường quốc tế Lê-Nin?", "371", "372", "373", "375", 3],
+    ["[TTHCM] Chiếc máy chữ mà Bác Hồ dùng suốt đời do ai tặng?", "Báo nhân dân", "Báo thanh niên", "Báo tiếng nói của chúng ta", "Báo chính luận", 2],
+    ["[TTHCM] Nguyễn Ái Quốc lấy tên là Hồ Chí Minh vào thời gian nào?", "13 – 8 – 1941", "13 – 8 – 1942", "13 – 8 – 1942", "13 – 8 – 1943", 1],
+    ["[TTHCM] “Tôi viết thơ trong thời gian bị giam ở các nhà tù của Tưởng Giới Thạch tại Trung Quốc. Nếu tôi dùng tiếng Việt để viết, bọn cai ngục khi nhìn thấy một thứ chữ mà chúng không hiểu,chắc chắn chúng sẽ tịch thu mất. Do đó tôi phải viết bằng chữ Hán”. Bác Hồ đã giải thích như thế với ai về tập thơ “Nhật kí trong tù”", "Nhà thơ Tố Hữu", "Đimitrova – nhà thơ Bulgari", "Phelit Pita Rodriget - Nhà thơ Cuba", "Ebtusenco – nhà thơ Xô Viết", 2],
+    ["[TTHCM] Bác Hồ viết “Tuyên ngôn độc lập” ở địa chỉ nào?", "Số nhà 48 phố Hàng Đào, Hà Nội", "Số nhà 48 phố Hàng Ngang, Hà Nội", "Số nhà 48 phố Hàng Lọng, Hà Nội", "Số nhà 48 phố Hàng Lược, Hà Nội", 1],
+    ["[TTHCM] Sau cách mạng tháng Tám năm 1945, Ban tuyên huấn Trung ương chọn những bài hát nào trình Bác Hồ để Bác duyệt làm Quốc ca?", "Cùng nhau đi hồng binh của nhạc sỹ Đỗ Nhuận", "Diệt phát xít của Nguyễn Đình Thi", "Tiến quân ca của nhạc sỹ Văn Cao", "Cả 3 bài hát trên", 3],
+    ["[TTHCM] “Tiến quân ca” của Văn Cao chính thức thành quốc ca vào thời gian nào?", "2-9-1945", "2-9-1955", "2-9-1960", "2-9-1975", 0],
+    ["[TTHCM] Theo Hồ Chí Minh, một bài quốc ca phải đạt những tiêu chuẩn nào?", "Nội dung sâu sắc, lời ca đẹp", "Hành khúc nghiêm trang hào hứng", "Nhịp điệu thong thả, dễ hát", "Cả 3 tiêu chuẩn trên", 3],
+    ["[TTHCM] Khi quân đồng minh sắp vào nước ta để tước khí giới của quân đội Nhật, Hội văn hóa cứu quốc treo khẩu hiệu chào mừng, trong đó có khẩu hiệu “Nước Việt Nam của người Việt Nam. Độc lập hay là chết. Hoan hô những người giải phóng của chúng ta”. Bác Hồ đã yêu cầu gỡ khẩu hiệu nào?", "Nước Việt Nam của người Việt Nam", "Độc lập hay là chết", "Hoan hô những người giải phóng của chúng ta", "Cả 3 khẩu hiệu trên", 2],
+    ["[TTHCM] Bác Hồ giải thích màu cờ đỏ sao vàng của nước ta cho một ông già làm vườn người Pháp thế nào ?", "Màu đỏ của máu, màu vàng của lúa chín", "Màu đỏ của lý tường cách mạng, màu vàng của da người", "Máu đỏ da vàng", "Màu đỏ của hoa đào miền Bắc, màu vàng của hoa mai miền Nam", 3],
+    ["[TTHCM] Chiếc mũ vải của Bác Hồ được tặng năm 1927, đến thập kỉ 60 Bác vẫn còn dùng mỗi khi đi công tác. Nay chiếc mũ vẫn được đặt trong nhà sàn Bác Hồ. Ai đã tặng Bác chiếc mũ ấy?", "Rôja Lúc Xăm Bua – nữ chiến sĩ cách mạng Quốc tế, người Đức", "Bà Vê ra người Nga – làm việc cùng Bác trong quốc tế Cộng sản", "Đặng Dĩnh Siêu – vợ cố thủ tướng Trung Quốc Chu Ân Lai", "Tống Khánh Linh – nguyên phó chủ tịch nước Cộng hoà Nhân dân Trung Hoa", 3],
+    ["[TTHCM] Ai từng hướng dẫn Nguyễn Ái Quốc viết báo bằng tiếng Pháp?", "Phan Chu Trinh", "Phan Văn Trường", "Nguyễn Thế Truyền", "Sác-lon-ghe chủ bút tờ nhân đạo (cháu ngoại của C.MAX)", 3],
+    ["[TTHCM] “Dân tộc ta, non song đất nước ta, đã sinh ra Hồ chủ tịch – người anh hùng dân tộc vĩ đại. Và chính Người đã làm rạng rỡ dân tộc ta, non song đất nước ta. Câu trên trích từ văn kiện nào?", "Diễn văn kỉ niệm 80 năm ngày sinh Bác Hồ", "Nghị quyết Đại hội VI của Đảng", "Điếu văn của Ban chấp hành Trung ương Đảng", "Diễn văn kỉ niệm 90 năm ngày sinh Bác Hồ", 2],
+    ["[TTHCM] “Không! Chúng ta thà hy sinh tất cả chứ không chịu mất nước, không chịu làm nô lệ”. Lời đanh thép trên trích từ “Lời kêu gọi toàn quốc kháng chiến”. Tác phẩm này được viết vào thời gian nào?", "17 – 12 – 1946", "18 – 12 – 1946", "19 – 12 – 1946", "20 – 12 – 1946", 2],
+    ["[TTHCM] Bác Hồ nói câu “ không có gì quý hơn độc lập, tự do” trong hoàn cảnh lịch sử nào?", "Cách mạng tháng tám năm 1945 thắng lợi", "Quân Pháp trở lại xâm lược nước ta", "Cuộc tấn công và nội dậy của quân dân ta trong cuộc chiến tổng tấn công năm 1968", "Không quân Mỹ leo thang đánh phá ác liệt miền Bắc nước ta", 3],
+    ["[TTHCM] Ai là tác giả bài thơ “ Vầng trăng Ba Đình”?", "Nguyễn Đình Thi", "Lâm Thị Mỹ Dạ", "Viễn Phương", "Lê Thị Mây", 2],
+    ["[TTHCM] “Thực tiễn không có lý luận hướng dẫn thì thành thực tiễn mù quáng, dễ mắc bệnh chủ quan, duy ý chí. Lý luận mà không liên hệ với thực tiễn là lý luận suông”. Ai nói câu trên?", "C.Mác", "Hồ Chí Minh", "Mao Trạch Đông", "Stalin", 1],
+    ["[TTHCM] Hồ Chí Minh tiếp nhận những mặt tích cực nào của Nho giáo?", "Triết lý hành động tập thể, hành đạo, giúp đời", "Ước vọng về một xã hội bình trị, hòa mục, hòa đồng", "Tu tâm dưỡng tính, đề cao lễ giáo, hiếu học", "Tất cả các tư tưởng trên", 3],
+    ["[TTHCM] Trong tư tưởng Hồ Chí Minh có những tư tưởng nào của Phật giáo?", "Vị tha, từ bi, bác ái, cứu khổ, cứu nạn", "Thương người như thể thương thân, sống có đạo đức, trong sạch, giản dị, chăm làm việc thiện, đề cao lao động, chống lười biếng", "Tinh thần bình đẳng, dân chủ, chống phân biệt đẳng cấp", "Tất cả những tư tưởng trên", 3],
+    ["[TTHCM] “Lúc bấy giờ tôi ủng hộ cách mạng tháng Mười chỉ theo cảm tính tự nhiên…Tôi kính yêu Lê Nin vì Lê Nin là nhà yêu nước vĩ đại đã giải phóng đồng bào mình….còn như Đảng là gì, công đoàn là gì còn chủ nghĩa xã hội là gì thì tôi không hiểu”. Đoạn văn trên trích từ tác phẩm nào?", "Thư gửi Quốc tế Cộng sản", "Đường Cách mệnh", "Con đường dẫn tôi đến Chủ nghĩa Mác – Lê Nin", "Những mẩu chuyện về đời hoạt động của Hồ chủ tịch", 2],
+    ["[TTHCM] Nguyễn Ái Quốc đọc “ Sơ thảo lần thứ nhất luận cương về vấn đề dân tộc và vấn đề thuộc địa” của Lê-Nin đăng trên tờ báo nào của nước Pháp?", "Báo nhân đạo (L’Humanité)", "Đời sống công nhân", "Thời báo nước Pháp", "Tiếng nói của chúng ta", 0],
+    ["[TTHCM] Việc tán thành quốc tế III và tham gia thành lập đảng cộng sản Pháp đánh dấu bước chuyển biến cách mạng nào ở Nguyễn Ái Quốc?", "Từ chủ nghĩa yêu nước đến với chủ nghĩa Lê-Nin", "Từ giác ngộ dân tộc đến giác ngộ giai cấp", "Từ người yêu nước trở thành người Cộng sản", "Tất cả sự chuyển biến trên", 3],
+    ["[TTHCM] “Ôi sáng xuân nay, xuân bốn mốt/ Một trời biên giới nắng hoa mơ/ Bác về! im lặng con chim hót/ Thánh thót bờ lau. Vui ngẩn ngơ”. Ai là tác giả của đoạn thơ trên đây?", "Tế Hanh", "Huy Cận", "Chế Lan Viên", "Tố Hữu", 3],
+    ["[TTHCM] Tư tưởng chính trị cốt lõi trong Tuyên ngôn độc lập của Hồ Chí Minh là vấn đề gì?", "Chủ nghĩa nhân đạo", "Tinh thần tự cường, tự tôn dân tộc", "Vấn đề chủ quyền quốc gia", "Độc lập, tư do gắn với phương hướng phát triển lên chủ nghĩa xã hội", 2],
+    ["[TTHCM] Những trở lực ngăn cản sự nghiệp xây dựng chủ nghĩa xã hội, thường được chủ tịch Hồ Chí Minh gọi là giặc “nội xâm”. Đó là thứ giặc gì?", "Bọn phản động trong nước", "Bọn phản động quốc tế cấu kết với bọn phản động trong nước", "Một số cán bộ, công chức và quần chúng “bất mãn” với sự nghiệp cách mạng của nhân dân", "Tệ nạn “ quan liêu, tham ô, lãng phí”", 3],
+    ["[TTHCM] Chủ tịch Hồ Chí Minh dùng hình tượng “ 5 ngón tay có ngón ngắn ngón dài” để nói lên điều gì?", "Để chỉ vị trí từng con người trong xã hội", "Chỉ giá trị từng con người trong xã hội", "Để chỉ nhiệm vụ của từng con người trong xã hội", "Đề sự cần thiết phải đoàn kết với nhau", 3],
+    ["[TTHCM] “Bất kì ai mà thật thà tán thành hòa bình, thống nhất, độc lập, dân chủ thì dù những người đó trước đây chống chúng ta, bây giờ chúng ta cũng thật thà đoàn kết với họ”. Tư tưởng này phù hợp với phương châm xử thế nào của dân tộc ta?", "Nợ máu phải trả bằng máu", "Ác giả ác báo", "Đời cha ăn mặn, đời con khát nước", "Đánh kẻ chạy đi không đánh người chạy lại", 3],
+    ["[TTHCM] Trong thời kỳ kháng chiến chống Mỹ, Bác Hồ đã làm gì thiết thực để có thể vào thăm chiến sỹ và đồng bào miền Nam?", "Kêu gọi bộ đội hăng hái đánh giặc, để nhanh chóng thống nhất đất nước", "Giải phẫu thay đổi hình dạng để bí mật vào Nam", "Mời các bác sỹ giỏi đến chăm lo sức khỏe cho mình đề đủ sức đi đường", "Tập hành quân như các chiến sỹ bộ đội", 3],
+    ["[TTHCM] Những cá nhân có thành tích xuất sắc thường được Bác Hồ tặng phần thưởng hiện vật mang hình ảnh Người. Đó là phần thưởng gì?", "Huân chương", "Huy chương", "Giấy khen", "Huy hiệu Bác Hồ", 3],
+    ["[TTHCM] Ai là người phát động phong trào “người tốt việc tốt”?", "Tôn Đức Thắng", "Nguyễn Lương Bằng", "Phạm Văn Đồng", "Hồ Chí Minh", 3],
+    ["[TTHCM] Vì sao Bác Hồ hoãn ngày nhận huân chương cao quý nhất mà nhà nước ta trao tặng?", "Vì đức tính khiêm tốn", "Vì người nhận thấy chưa xứng đáng với giải thưởng cao quý đó", "Vì Bác muốn đến ngày thống nhất, nhân dân miền Nam tự tay trao giải thưởng đó cho Người", "Vì chủ tịch nước không nên nhận giải thưởng", 2],
+    ["[TTHCM] Hồ Chí Minh ký sắc lệnh lấy ngày nào làm “ Ngày thương binh liệt sỹ”?", "21 – 7 – 1947", "22 – 7 – 1947", "25 – 7 – 947", "27 – 7 – 1947", 3],
+    ["[TTHCM] Chiến dịch kết thúc cuộc kháng chiến chống Mỹ của nhân nhân ta mang tên ai?", "Quang Trung", "Trần Hưng Đạo", "Lê Lợi", "Hồ Chí Minh", 3],
+    ["[TTHCM] Khi học ở trường quốc học Huế, Nguyễn Tất Thành đã đọc sách của các nhà tư tưởng tiến bộ người Pháp. Họ là ai?", "Vôn-te", "Rút-xô", "Mon-tex-ki-xơ", "Cả 3 người trên", 3],
+    ["[TTHCM] Ai là người đi đầu trong việc quyên góp ủng hộ chính phủ trong “tuần lễ vàng” đã được Hồ Chí Minh tặng thưởng huy chương vàng?", "Bạch Thái Bưởi", "Nguyễn Sơn Hà", "Vương Thị Lai", "Trịnh Văn Bô", 2],
+    ["[TTHCM] Chủ tịch Hồ Chí Minh thay mặt chính phủ tặng đồng bào miền Nam danh hiệu gì vào tháng 12-1946?", "Sản xuất giỏi", "Kháng chiến anh dũng", "Thành đồng tổ quốc", "Cả 3 danh hiệu trên", 2],
+    ["[TTHCM] Hồ Chí Minh nói: “Tôi chỉ có 1 ham muốn, ham muốn tột bậc, là làm sao cho nước ta được hoàn toàn độc lập, dân ta hoàn toàn tự do, đồng bào ta ai cũng có cơm ăn áo mặc, ai cũng được học hành” vào ngày tháng năm nào?", "21/11/1946", "19/5/1954", "19/5/1960", "19/5/1969", 0],
+    ["[TTHCM] “Đồng bào Nam Bộ là dân nước Việt Nam, là máu thịt của Việt Nam. Sông có thể cạn, núi có thể mòn nhưng chân lý ấy không bao giờ thay đổi. Câu nói này của Hồ Chí Minh được trích ra từ văn kiện nào?", "Bài nói chuyện cùng đồng bào trước khi sang Pháp", "Thư gửi đồng bào Nam Bộ ngày 31/5/1946", "Lời kêu gọi Kiều bào Việt Nam tại Pháp", "Trả lời phóng viên hãng thông tấn A.F.P", 1],
+    ["[TTHCM] Hồ Chí Minh khẳng định: “Nay tuy châu chấu đấu voi/ Nhưng mai voi sẽ bị lòi ruột ra”. Điều khẳng định trên xuất hiện ở thời gian nào trong quá trình kháng chiến chống Pháp?", "2/1951", "4/1953", "4/1952", "1/1954", 0],
+    ["[TTHCM] Khi trao nhiệm vụ cho một vị tướng, ngày 1/1/1954, Hồ Chí Minh nói: “Trao cho chú toàn quyền quyết định, trận này quan trọng, phải đánh cho thắng. Chắc thắng mới đánh, không chắc thắng không đánh”. Vị tướng được trao nhiệm vụ đó là:", "Nguyễn Chí Thanh", "Trần Văn Quang", "Võ Nguyên Giáp", "Nguyễn Sơn", 2],
+    ["[TTHCM] Hồ Chí Minh nói: “Trao cho chú toàn quyền quyết định , trận này quan trọng, phải đánh cho thắng. Chắc thắng mới đánh, không chắc thắng không đánh”. Trận đánh đó là chiến dịch nào?", "Biên Giới", "Tây Bắc", "Thượng Lào", "Điện Biên Phủ", 3],
+    ["[TTHCM] Bác Hồ nói : “Ngày xưa các vua Hùng đã có công dựng nước, ngày nay Bác cháu ta phải cùng nhau giữ lấy nước”. Bác Hồ nói câu trên ở đâu?", "Tân Trào", "Hà Nội", "Cổ Loa", "Đền Hùng", 3],
+    ["[TTHCM] Nhân dân ta thường nói : “Đảng viên đi trước, làng nước theo sau” câu nói đó của Hồ Chí Minh ở trong tác phẩm nào của Người?", "Đạo đức cách mạng", "Đường cách mệnh", "Nâng cao đạo đức cách mạng, quét sạch chủ nghĩa cá nhân", "Sửa đổi lối làm việc", 2],
+    ["[TTHCM] “Chiến tranh có thể kéo dài 5 năm, 10 năm hoặc 20 năm hoặc lâu hơn nữa. Song nhân dân Việt Nam quyết không sợ. Không có gì quý hơn độc lập tự do. Đến ngày thắng lợi nhân dân ta sẽ xây dựng lại đất nước ta đành hoàng hơn, to đẹp hơn”. Hồ Chí Minh nói câu đó ở trong văn kiện nào?", "Lời kêu gọi, ngày 19/12/1946", "Lời kêu gọi ngày 17/7/1966", "Thư chúc Tết, năm 1968", "Di chúc, 1969", 1],
+    ["[TTHCM] “Đảng ta là một Đảng cầm quyền. Mỗi đảng viên và cán bộ phải thật sự thấm nhuần đạo đức cách mạng, thật sự cần kiệm liêm chính, chí công vô tư. Phải giữ gìn Đảng ta thật trong sạch, phải xứng đáng là người lãnh đạo, là đầy tớ thật trung thành của nhân dân”. Câu nói trên của Hồ Chí Minh ở trong tác phẩm nào của Người?", "Đạo đức cách mạng", "Đường cách mệnh", "Bản Di chúc", "Sửa đổi lối việc làm", 2],
+    ["[TTHCM] “Đoàn kết là một truyền thống cực kỳ quý báu của Đảng ta, của dân ta. Các đồng chí từ Trung ương đến các chi bộ cần phải giữ gìn sự đoàn kết nhất trí của Đảng như giữ gìn con ngươi của mắt mình”. Hồ Chí Minh nói câu đó ở văn kiện nào?", "Đạo đức cách mạng", "Sửa đổi lối việc làm", "Thường thức chính trị", "Bản Di chúc", 3],
+    ["[TTHCM] Bài thơ: “ Năm qua thắng lợi vẻ vang. Năm nay tiền tuyến chắc càng thắng to. Vì độc lập, vì tự do. Đánh cho Mỹ cút, đánh cho Nguỵ nhào. Tiến lên chiến sĩ đồng bào. Bắc Nam sum họp xuân nào vui hơn”. Bài thơ chúc Tết này được Bác Hồ viết vào năm nào?", "1966", "1967", "1968", "1969", 3],
+    ["[TTHCM] Những câu nói sau đây, câu nào là của Hồ Chí Minh?", "Muốn được dân yêu, muốn được lòng dân, trước hết phải yêu dân, phải đặt quyền lợi của dân lên hết thảy, phải có một tinh thần chí công vô tư", "Chúng ta đã xây dựng lên nước Việt Nam dân chủ Cộng hoà. Nhưng nếu nước độc lập mà dân không được hưởng hạnh phúc, tự do thì độc lập cũng chẳng có ý nghĩa gì", "Chính phủ nhân dân bao giờ cũng phải đặt quyền lợi nhân dân lên trên hết thảy. Việc gì có lợi cho dân thì làm. Việc gì có hại cho dân thì phải tránh", "Tất cả các câu nói trên", 3],
+    ["[TTHCM] Hồ Chí Minh khẳng định: “Một Đảng mà giấu giếm khuyết điểm của mình là một Đảng hỏng. Một Đảng có gan thừa nhận khuyết điểm của mình, rồi tìm cách để sửa chữa khuyết điểm đó. Như thế là một Đảng tiến bộ, mạnh dạn, chắc chắn, chân chính”. Điều khẳng định trên được Hồ Chí Min viết trong tác phẩm nào?", "Đời sống mới", "Sửa đổi lề lối làm việc", "Thư gửi các đồng chí Bắc Bộ", "Thư gửi các đồng chí tỉnh nhà", 1],
+    ["[TTHCM] Chọn phương án trả lời đúng nhất:", "Chủ nghĩa Mác-Lênin là nền tảng tư tưởng, kim chỉ nam cho hành động của Đảng ta", "Tư tưởng Hồ Chí Minh là nền tảng tư tưởng, kim chỉ nam cho hành động của Đảng ta", "Cùng với chủ nghĩa Mác-Lenin, tư tưởng Hồ Chí Minh là nền tảng tư tưởng, kim chỉ nam cho hành động của Đảng ta", "Cùng với chủ nghĩa Mác-Lênin, tư tưởng Hồ Chí Minh là nền tảng tư tưởng cho hành động của Đảng ta", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, ưu điểm lớn nhất của học thuyết Khổng Tử là gì?", "Tinh thần hiếu học", "Quản lý xã hội bằng đạo đức", "Sự tu dưỡng đạo đức cá nhân", "Lòng nhân ái cao cả", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, ưu điểm lớn nhất của tôn giáo Giêsu là gì?", "Đức hy sinh", "Lòng cao thượng", "Lòng nhân ái cao cả", "Lòng tư bi bác ái", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, ưu điểm lớn nhất của chủ nghĩa Mác là gì?", "Bản chất cách mạng", "Bản chất khoa học", "Chủ nghĩa nhân đạo triệt để", "Phương pháp làm việc biện chứng", 3],
+    ["[TTHCM] Theo Hồ Chí Minh, học chủ nghĩa Mác-Lênin nghĩa làm gì?", "Học thuộc các luận điểm lý luận", "Để sống với nhau có tình có nghĩa", "Để chứng tỏ trình độ lý luận", "Để xây dựng chủ nghĩa xã hội", 1],
+    ["[TTHCM] Tư tưởng Hồ Chí Minh hình thành và phát triển qua mấy giai đoạn?", "3", "4", "5", "6", 2],
+    ["[TTHCM] Chọn cụm từ điền vào dấu (...). Tháng 7 năm 1920, Hồ Chí Minh đọc.... của V.I. Lênin.", "Tác phẩm “Làm gì”", "Sơ thảo lần thứ nhất luận cương về các vấn đề dân tộc", "Sơ thảo lần thứ nhất luận cương về các vấn đề dân tộc và các vấn đề thuộc địa", "Tác phẩm “Nhà nước và cách mạng”", 2],
+    ["[TTHCM] Hồ Chí Minh được UNESCO ra Nghị quyết công nhận là anh hùng giải phóng dân tộc Việt Nam và danh nhân văn hóa kiệt xuất vào năm nào?", "1969", "1975", "1987", "1990", 2],
+    ["[TTHCM] Chọn cụm từ điền vào chỗ trống: “Toàn quốc đồng bào hãy đứng dậy...mà tự giải phóng cho ta”", "Dựa vào sự giúp đỡ của quốc tế", "Dựa vào sự đoàn kết toàn dân", "Dưới sự lãnh đạo của Đảng", "Đem sức ta", 3],
+    ["[TTHCM] Chọn cụm từ điền vào chỗ trống: “Toàn thể dân tộc Việt Nam quyết đem...để giữ vững quyền tự do độc lập ấy”", "Toàn bộ sức lực", "Tất cả tinh thần và lực lượng", "Tất cả tinh thần và lực lượng, tính mạng và của cải", "Tất cả tinh thần và của cải", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, đặc trưng kinh tế nổi bật nhất của chủ nghĩa xã hội là gì?", "Khoa học – kỹ thuật phát triển", "Cơ cấu công – nông nghiệp hợp lý", "Sở hữu xã hội về tư liệu sản xuất", "Phúc lợi xã hội được đảm bảo", 2],
+    ["[TTHCM] Theo giáo trình tư tưởng Hồ Chí Minh, đặc trưng nổi bật nhất về chính trị của chủ nghĩa xã hội là gì?", "Đảng cộng sản lãnh đạo", "Thực hiện một nền dân chủ triệt để", "Mọi người được hưởng các quyền tự do dân chủ", "Hòa bình ổn định", 1],
+    ["[TTHCM] Trong xây dựng chủ nghĩa xã hội, Hồ Chí Minh chủ trương đối xử với giai cấp tư sản, dân tộc như thế nào?", "Xóa bỏ quyển sở hữu về tư liệu sản xuất của họ", "Không xóa bỏ quyển sở hữu về tư liệu sản xuất của họ", "Đánh đổ họ với tư cách là giai cấp bóc lột", "Loại họ ra khỏi lực lượng nòng cốt của dân tộc", 1],
+    ["[TTHCM] Theo Hồ Chí Minh, tại sao cần chế độ làm khoán dưới chủ nghĩa xã hội ?", "Khuyến khích được lợi ích cho người lao động", "Có lợi cho nhà nước", "Kết hợp được các lợi ích của người lao động, lợi ích của tập thể và lợi ích của nhà nước", "Theo xu thế chung của thời đại", 2],
+    ["[TTHCM] Điều mong muốn cuối cùng của HCM được nêu lên trong Di chúc là gì ?", "Xây dựng một nước VN giàu mạnh", "Làm cho mọi người dân hạnh phúc", "Xây dựng một nước VN hòa bình thống nhất, độc lập dân chủ giàu mạnh và góp phần xứng đáng vào sự nghiệp cách mạng thế giới", "Làm cho dân giàu nước mạnh.", 2],
+    ["[TTHCM] Sức mạnh dân tộc bao gồm những yếu tố chủ yếu nào?", "Chủ nghĩa yêu nước", "Tinh thần đoàn kết", "Ý thức tự lực tự cường", "Tất cả các yếu tố trên", 3],
+    ["[TTHCM] Sức mạnh thời đại bao gồm những yếu tố nào ?", "Sức mạnh của khoa học kĩ thuật", "Sự đoàn kết của giai cấp công nhân quốc tế", "Sự đoàn kết của các dân tộc bị áp bức và các lực lượng tiến bộ thế giới", "Tất cả các yếu tố trên", 3],
+    ["[TTHCM] Điền vào chỗ trống hoàn chỉnh câu thơ của Hồ Chí Minh: “rằng đây bốn biển một nhà/ ......đều là anh em”.", "Lao động thế giới", "Bốn phương vô sản", "Vàng đen vàng trắng", "Đồng minh đồng chí", 1],
+    ["[TTHCM] Trong kháng chiến chống Mỹ, Hồ Chí Minh đã thành công trong việc xây dựng các loại mặt trận nào?", "Mặt trận đại đoàn kết dân tộc", "Mặt trận đoàn kết 3 nước Đông Dương", "Mặt trận nhân dân tiến bộ thế giới đoàn kết với Việt Nam", "Các phương án trên đều đúng", 3],
+    ["[TTHCM] Theo giáo trình Tư tưởng Hồ Chí Minh, động lực chủ yếu của sự phát triển nước ta hiện nay là gì ?", "Đại đoàn kết dân tộc", "Sự ủng hộ quốc tế", "Các nguồn vốn thu hút từ bên ngoài’", "Tiềm lực con người", 0],
+    ["[TTHCM] Cho đến hiện nay nước ta đã mấy lần sửa đổi hiến pháp?", "2", "3", "4", "5", 2],
+    ["[TTHCM] Hồ Chí Minh xác định yếu tố nào là gốc của người cách mạng?", "Tài năng", "Đạo đức", "Tinh thần", "Lối sống", 1],
+    ["[TTHCM] Tìm một phương án sai trong đoạn sau đây: “Trong 10 năm đầu (1911 – 1920) của quá trình bôn ba tìm đường cứu nước, Nguyễn Ái Quốc đã:", "Vượt qua 3 đại dương, 4 châu lục", "Đến khoảng gần 30 nước", "Sống, làm thuê và tự học tại các nước Mỹ, Anh, Pháp", "Đến Matxcova dự hội nghị Quốc tế nông dân", 3],
+    ["[TTHCM] Tìm một điểm nhầm lẫn trong đoạn viết sau đây : “Một trong những nguồn gốc Tư tưởng Hồ Chí Minh là tiếp thu văn hóa phương Đông. Cụ thể là:", "Những mặt tích cực của Nho giáo", "Tư tưởng vị tha của Phật giáo", "Tư tưởng của Khổng Tử về một xã hội bình yên không bao giờ thay đổi", "Chủ nghĩa Tam dân của Tôn Trung Sơn.", 2],
+    ["[TTHCM] Theo Hồ Chí Minh, mục tiêu tổng quát của chủ nghĩa xã hội là gì?", "Một nền kinh tế hiện đại có sức tăng trưởng cao", "Không ngừng cải thiện và nâng cao đời sống của nhân dân lao động", "Phát triển mạnh mẽ khoa học kĩ thuật", "Đảm bảo quyền làm chủ của nhân dân lao động", 1],
+    ["[TTHCM] Theo Hồ Chí Minh, có mấy loại hình quá độ lên Chủ nghĩa xã hội ?", "1", "2", "3", "4", 1],
+    ["[TTHCM] Chọn phương án đúng trả lời cho câu hỏi sau: Cách mạng giải phóng dân tộc trong thời đại mới phải do Đảng Cộng sản lãnh đạo để:", "Giác ngộ quần chúng", "Tổ chức, tập hợp quàn chúng", "Đoàn kết với giai cấp vô sảnvà các dân tộc bị áp bức trên thế giới", "Tất cả các phương án trên", 3],
+    ["[TTHCM] Chọn phương án đúng trả lời cho câu hỏi sau: Lực lượng giải phóng dân tộc gồm:", "Công nhân, nông dân", "Công nhân, nông dân, trí thức", "Toàn dân tộc", "Thanh niên, học sinh, sinh viên", 2],
+    ["[TTHCM] Chọn cụm từ điền vào chỗ trống đúng với Tư tưởng Hồ Chí Minh: “Việt Nam đi lên CNXH từ một nước thuộc địa nửa phong kiến,…”", "Bỏ qua giai đoạn phát triển tư bản chủ nghĩa", "Không kinh qua giai đoạn phát triển tư bản chủ nghĩa", "Bỏ qua chế độ tư bản chủ nghĩa", "Xuyên qua chủ nghĩa tư bản", 1],
+    ["[TTHCM] Tìm luận điểm không đúng với Tư tưởng Hồ Chí Minh:", "Công nghiệp hóa là con đường tất yếu phải đi của chúng ta", "Công nghiệp hóa phải bắt đầu từ xây dựng và phát triển công nghiệp nặng", "Công nghiệp hóa phải trên cơ sở xây dựng, phát triển một nền nông nghiệp toàn diện", "Công nghiệp hóa phải trên cơ sở phát triển công nghiệp nhẹ, tiểu thủ công nghiệp", 1],
+    ["[TTHCM] Theo Hồ Chí Minh, biện pháp nào quan trọng nhất trong xây dựng chủ nghĩa xã hội?", "Tranh thủ tối đa sự trợ giúp, viện trợ quốc tế", "Huy động các nguồn lực có sẵn trong dân", "Kết hợp cải tạo xã hội cũ với xây dựng xã hội mới", "Kết hợp xây dựng và bảo vệ đất nước", 1],
+    ["[TTHCM] Khẩu hiệu chiến lược: “ giai cấp vô sản tất cả các nước và các dân tộc bị áp bức, đoàn kết lại” là của tác giả nào?", "Các Mác", "Ph. Ăngghen", "VI. Lenin", "Hồ Chí Minh", 2],
+    ["[TTHCM] Chọn câu trả lời đúng với tư tưởng Hồ Chí Minh?", "Đại đoàn kết dân tộc là vấn đề sách lược", "Đại đoàn kết dân tộc là vấn đề chiến lược", "Đại đoàn kết dân tộc là phương pháp chính trị", "Đại đoàn kết dân tộc là vấn đề nòng cốt", 0],
+    ["[TTHCM] Chọn phương án trả lời đúng theo Tư tưởng Hồ Chí Minh về lực lượng chủ yếu của khối đại đoàn kết dân tộc", "Công nhân", "Công nhân, nông dân", "Học trò, nhà buôn", "Công nhân, nông dân, lao động trí óc", 3],
+    ["[TTHCM] Chọn câu trả lời đúng nhất theo Tư tưởng Hồ Chí Minh về tổ chức của Mặt trận dân tộc thống nhất:", "Mặt trận dân tộc thống nhất là tổ chức của các đảng phái, các đoàn thể, các nhân sĩ", "Mặt trận dân tộc thống nhất là tổ chức của các tầng lớp nhân dân", "Mặt trận dân tộc thống nhất là tổ chức của giai cấp công nhân, nông dân, lao động trí óc", "Mặt trận dân tộc thống nhất là nơi quy tụ mọi tổ chức và cá nhân trong và ngoài nước", 3],
+    ["[TTHCM] Trong thời kì ra đi tìm đường cứu nước, giải phóng dân tộc, Hồ Chí Minh đã tham gia tổ chức:", "Đảng Xã hội Pháp", "Đảng Cộng sản Pháp", "Đảng Dân chủ Pháp", "Đảng cộng sản Anh", 0],
+    ["[TTHCM] Chọn phương án trả lời đúng theo Tư tưởng Hồ Chí Minh: để tranh thủ sự giúp đỡ của các nước XHCN trong đấu tranh cách mạng, cần coi trọng nhân tố:", "Tự lực cánh sinh, dựa vào sức mình là chính", "Có đường lối độc lập tự chủ đúng đắn", "Dựa vào nguồn lực nội sinh là chính", "Dựa vào chính sách đối ngoại khôn khéo", 0],
+    ["[TTHCM] Chọn phương án trả lời đúng theo Tư tưởng Hồ Chí Minh về nguyên tắc ngoại giao:", "Phải cứng rắn về nguyên tắc", "Phải mềm dẻo về sách lược", "Vừa cứng rắn về nguyên tắc, vừa mềm dẻo về sách lược", "“Dĩ bất biến ứng vạn biến”", 2],
+    ["[TTHCM] Đảng phải thường xuyên tự đổi mới, tự chỉnh đốn về mặt nào ?", "Chính trị", "Tư tưởng", "Tổ chức", "Các phương án trên đều đúng", 3],
+    ["[TTHCM] Quan điểm : “Đảng ta là một Đảng cầm quyền” được Hồ Chí Minh trình bày trong văn kiện nào?", "Chánh cương vắn tắt của Đảng", "Báo cáo chính trị tại Đại hội lần thứ II của Đảng", "Diễn văn khai mạc Đại hội đại biểu toàn quốc lần III của Đảng Lao động Việt Nam", "Di chúc", 3],
+    ["[TTHCM] Hồ Chí Minh là người đã trực tiếp chỉ đạo biên soạn các Hiến pháp nào của nước ta ?", "Hiến pháp 1946", "Hiến pháp 1959", "Hiến pháp 1980", "Hiến pháp 1992", 0],
+    ["[TTHCM] Chọn phương án trả lời đúng nhất theo Tư tưởng Hồ Chí Minh: Nhà nước của dân là:", "Nhà nước do nhân dân tổ chức lên", "Dân là chủ nhà nước, quyền lực nhà nước thuộc về nhân dân", "Nhà nước phục vụ nhân dân, đem lại lợi ích cho nhân dân", "Nhân dân phục tùng nhà nước", 1],
+    ["[TTHCM] Chọn cụm từ đúng điền vào dấu(....) “Làm cách mệnh rồi thì quyền trao cho..., chớ để trong tay một bọn ít người”", "Giai cấp công nhân", "Giai cấp nông dân", "Dân chúng số nhiều", "Giai cấp tư sản dân tộc", 2],
+    ["[TTHCM] Điểm đặc sắc nhất trong tư tưởng Hồ Chí Minh về Nhà nước pháp quyền là gì ?", "Coi trọng luật pháp trong quản lý xã hội", "Đề cao đạo đức trong quản lý xã hội", "Đảm bảo tính nghiêm minh và hiệu lực của pháp luật", "Kết hợp nhuần nhuyễn cả pháp luật và đạo đức trong quản lý xã hội", 3],
+    ["[TTHCM] Chọn cụm từ đúng điền vào dấu (...) “Người cách mạng phải có....thì mới gánh được nặng và đi được xa”", "Trí tuệ", "Phương pháp cách mạng", "Đạo đức cách mạng", "Ý chí cách mạng", 2],
+    ["[TTHCM] Chọn cụm từ đúng điền vào chỗ trống (....) “Học để làm việc, ...,làm cán bộ", "Có tri thức", "Làm người", "Làm cách mạng", "Phục vụ nhân dân", 1],
+    ["[TTHCM] Đặc điểm nổi bật nhất của tình hình thế giới hiện nay là gì?", "Có nguy cơ diễn ra chiến tranh thế giới", "Nạn khủng bố hoành hành", "Xuất hiện các vấn đề toàn cầu", "Cuộc cách mạng khoa học - công nghệ phát triển mạnh mẽ", 3],
+    ["[TTHCM] Chọn phương án sai trong các nhận định dưới đây:", "Cách mạng khoa học công nghệ thúc đẩy xu thế toàn cầu hóa", "Cách mạng khoa học công nghệ làm xuất hiện các vấn đề toàn cầu", "Cách mạng khoa học công nghệ là sản phẩm tất yếu của xu thế toàn cầu hóa.", "Trong điều kiện cách mạng khoa học công nghệ, khoa học trở thành lực lượng sản xuất trực tiếp", 2],
+    ["[TTHCM] Theo giáo trình Tư tưởng Hồ Chí Minh, xu thế phát triển chủ đạo của thế giới hiện nay là gì ?", "Đối đầu giữa các quốc gia, dân tộc", "Hòa bình, hợp tác và phát triển", "Đụng độ giữa các nền văn minh, các nền văn hóa", "Đấu tranh giai cấp gay gắt, quyết liệt", 1],
+    ["[TTHCM] Việt Nam hiện nay đang đối đầu với những nguy cơ nào?", "Tụt hậu về kinh tế", "Tham nhũng, quan liêu, chệch hướng xã hội chủ nghĩa", "Diễn biến hòa bình", "Tất cả các nguy cơ trên", 3],
+    ["[TTHCM] Thành tựu nổi bật nhất của Việt Nam về chính trị trong những năm đổi mới là gì ?", "Giữ vững độc lập dân tộc", "Ổn định", "Phát triển theo định hướng xã hội chủ nghĩa", "Không có xung đột sắc tộc tôn giáo", 1],
+    ["[TTHCM] Kiên trì con đường Hồ Chí Minh đã chọn nghĩa là:", "Giữ vững nền độc lập dân tộc", "Thực hiện triệt để cuộc cách mạng dân tộc dân chủ nhân dân", "Thực hiện mục tiêu độc lập dân tộc gắn liền với Chủ nghĩa xã hội", "Hội nhập với nền kinh tế thế giới", 2],
+    ["[TTHCM] Theo giáo trình Tư tưởng Hồ Chí Minh, mục tiêu cách mạng của đất nước ta hiện nay là gì ?", "Độc lập dân tộc gắn liền với CNXH", "Dân giàu, nước mạnh", "Xã hội công bằng, dân chủ, văn minh", "Các phương án trên đều đúng", 3],
+    ["[TTHCM] Cơ chế vận hành của hệ thống chính trị nước ta là gì?", "Nhà nước lãnh đạo, Đảng quản lý, nhân dân làm chủ", "Nhà nước làm chủ, Đảng lãnh đạo, nhân dân quản lý", "Đảng lãnh đạo, nhà nước quản lý, nhân dân làm chủ", "Đảng và nhà nước lãnh đạo, quản lý, nhân dân làm chủ", 2],
+    ["[TTHCM] Những câu sau đây, câu nào là của Hồ Chí Minh?", "Sự tàn bạo của CNTB đã chuẩn bị đất rồi: CNXH chỉ còn phải làm cái việc là gieo hạt giống của công cuộc giải phóng nữa thôi", "Xem xét lại chủ nghĩa Mác về cơ sở lịch sử của nó, củng cố nó bằng dân tộc học phương Đông", "Chủ nghĩa dân tộc là động lực lớn của đất nước", "Các phương án trên đều đúng", 3],
+    ["[TTHCM] Câu “Một dân tộc dốt là một dân tộc yếu” được trích từ bài viết nào của Hồ Chí Minh?", "Chống nạn thất học", "Thư gửi các học sinh", "Những nhiệm vụ cấp bách của Nhà nước Việt Nam dân chủ Cộng hòa", "Thư gửi cán bộ chiến sỹ công an", 2],
+    ["[TTHCM] “Non sông Việt Nam có trở lên tươi đẹp hay không, dân tộc Việt Nam có bước tới đài vinh quang để sánh vai với các cường quốc năm châu được hay không chính là nhờ một phần lớn ở công học tập của các em”. Hồ Chí Minh viết đoạn văn này nhân dịp:", "Khai giảng năm học đầu tiên của nước VNDCCH", "Đêm trung thu đầu tiên của nước VNDCCH", "Ngày khai trường đầu tiên của nước VNDCCH", "Phát động chống nạn thất học", 2],
+    ["[TTHCM] “Trung với Đảng, hiếu với dân, nhiệm vụ nào cũng hoàn thành, khó khăn nào cũng vượt qua, kẻ thù nào cũng đánh thắng”, nội dung này được Hồ Chí Minh nói với lực lượng nào?", "Công an nhân dân", "Quân đội nhân dân", "Thanh niên xung phong", "Dân công hỏa tuyến", 0],
+    ["[TTHCM] Hồ Chí Minh viết “Những người trúng cử, sẽ phải ra sức giữ vững nền độc lập của Tổ quốc, ra sức …cho đồng bào. Phải luôn luôn nhớ và thực hành câu: vì lợi nước quên lợi nhà, vì lợi ích chung quên lợi ích riêng”. Chọn một phương án đúng điền vào chỗ trống để hoàn thiện:", "Làm giàu", "Giải phóng", "Tăng phúc lợi", "Mưu cầu hạnh phúc", 3],
+    ["[TTHCM] “Chống……và bệnh quan liêu cũng quan trọng và cần kíp như việc đánh giặc trên mặt trận”. Chọn một phương án đúng điền vào chỗ trống để hoàn thiện câu nói trên của Hồ Chí Minh", "Phá hoại của công", "Tham ô, lãng phí", "Vi phạm kỉ luật", "Lãng phí", 1],
+    ["[TTHCM] “Thi đua là yêu nước, yêu nước thì phải thi đua. Và những người thi đua là những người …”.Chọn một phương án đúng điền vào chỗ trống để hoàn thiện câu nói của Hồ Chí Minh tại Đại hội các chiến sĩ thi đua toàn quốc ngày 1/5/1952:", "Tích cực nhất", "Yêu nước nhất", "Xứng đáng nhất", "Đáng khen nhất", 1],
+    ["[TTHCM] Hãy lựa chọn câu trả lời đúng nhất theo tư tưởng Hồ Chí Minh:", "Vì lợi ích mười năm trồng cây, vì lợi ích trăm năm trồng người", "Vì lợi ích mười năm phải trồng cây, vì lợi ích trăm năm phải trồng người", "Vì lợi ích mười năm, trồng cây; vì lợi ích trăm năm, trồng người", "Vì lợi ích mười năm thì phải trồng cây, vì lợi ích trăm năm thì phải trồng người", 3],
+    ["[TTHCM] “Yêu Tổ quốc, yêu nhân dân phải gắn liền với yêu CNXH, vì vậy có tiến lên CNXH thì nhân dân mình mới ngày một no ấm, Tổ quốc ngày càng giàu mạnh thêm”. Câu nói trên của Hồ Chí Minh phản ánh điều gì ?", "Độc lập - tự do là quyền thiêng liêng", "Chủ nghĩa dân tộc là động lực lớn", "Sự kết hợp nhuần nhuyễn giữa giai cấp và dân tộc", "Sự kết hợp nhuần nhuyễn giữa độc lập dân tộc và CNXH.", 3],
+    ["[TTHCM] Trong các giá trị truyền thống của dân tộc Việt Nam, giá trị nào có tác động mạnh nhất thúc giục Hồ Chí Minh ra đi tìm tòi học hỏi tiếp thu tinh hoa văn hóa nhân loại ?", "Chủ nghĩa yêu nước", "Chủ nghĩa quốc tế vô sản", "Sự cố kết cộng đồng dân tộc", "Sự khoan dung độ lượng", 0],
+    ["[TTHCM] Trong những nguồn gốc hình thành Tư tưởng Hồ Chí Minh, nguồn gốc nào là nhân tố “đã thúc giục Hồ Chí Minh ra đi tìm tòi học hỏi tiếp thu tinh hoa văn hóa nhân loại để làm giàu tư tưởng cách mạng và văn hóa của Hồ Chí Minh?", "Giá trị truyền thống dân tộc Việt Nam", "Tinh hoa văn hóa nhân loại", "Chủ nghĩa Mác - Lênin", "Phẩm chất cá nhân của Hồ Chí Minh", 0],
+    ["[TTHCM] Hồ Chí Minh đã tiếp thu giá trị tích cực nào của văn hóa phương Tây?", "Giá trị về quyền sống, quyền tự do và quyền mưu cầu hạnh phúc", "Tư tưởng vị tha, từ bi, bác ái", "Triết lý nhân sinh, tu thân, tề gia", "Tư tưởng dân tộc độc lập, đân quyền tự do, dân sinh hạnh phúc", 0],
+    ["[TTHCM] Hồ Chí Minh đã tiếp thu giá trị tích cực nào của Tôn Trung Sơn?", "Tư tưởng dân tộc độc lập, dân quyền tự do, dân sinh hạnh phúc", "Tư tưởng vị tha, từ bi, bác ái", "Tư tưởng dân chủ, bình đẳng, bác ái", "Triết lý nhân sinh, tu thân, tề gia", 0],
+    ["[TTHCM] Nhân cách, phẩm chất, tài năng nào đã tác động đến sự hình thành và phát triển tư tưởng Hồ Chí Minh?", "Là người sống có hoài bão", "Là người sống có lý tưởng yêu nước", "Là người có lòng thương dân, có bản lĩnh kiên định", "Cả 3 đều đúng", 3],
+    ["[TTHCM] Dựa vào các tiêu chí nào để phân chia các thời kì lịch sử Tư tưởng Hồ Chí Minh?", "Dựa vào sự chuyển biến về mặt tư tưởng của Hồ Chí Minh", "Dựa vào mốc thời gian hoạt động", "Dựa vào sự chuyển biến của thời đại", "Dựa vào các sự kiện lịch sử của cách mạng Việt Nam", 0],
+    ["[TTHCM] Nhân tố nào đã tác động trực tiếp hình thành tư tưởng yêu nước, thương dân của Hồ Chí Minh?", "Do sống trong nỗi đau người dân mất nước", "Do sớm được sự giáo dục của gia đình và quê hương", "Do sớm tham gia phong trào đấu tranh chống Pháp", "Cả 3 đều đúng", 3],
+    ["[TTHCM] Hồ Chí Minh viết: “Đằng sau sự phục tùng tiêu cực, người Đông Dương giấu một cái gì đang sôi sục, gào thét và sẽ bùng nổ một cách ghê ghớm khi thời cơ đến”. Luận điểm trên phản ánh nội dung nào trong tư tưởng nhân văn của Người?", "Yêu thương con người", "Tin vào sức mạnh và sức sáng tạo của nhân dân", "Lòng khoan dung độ lượng", "Cả 3 nội dung trên đều đúng", 1],
+    ["[CNXHKH] Những nhà tư tưởng tiêu biểu của chủ nghĩa xã hội không tưởng phê phán đầu thế kỷ XIX?", "Grắccơ Babớp, Xanh Ximông, Sáclơ Phuriê", "Xanh Ximông, Sáclơ Phuriê, G. Mably", "Xanh Ximông, Sáclơ Phuriê, Rôbớt Ôoen", "Xanh Ximông, Giăng Mêliê, Rôbớt Ôoen", 2],
+    ["[CNXHKH] Nhà tư tưởng xã hội chủ nghĩa nào đã tiến hành thực nghiệm xã hội cộng sản trong lòng xã hội tư bản?", "Xanh Ximông", "Sáclơ Phuriê", "Grắccơ Babớp", "Rôbớt Ôoen", 3],
+    ["[CNXHKH] Những yếu tố tư tưởng XHCN được xuất hiện từ khi nào?", "Chế độ tư bản chủ nghĩa ra đời", "Sự xuất hiện chế độ tư hữu, xuất hiện giai cấp thống trị và bóc lột", "Sự xuất hiện giai cấp công nhân", "Thời cộng sản nguyên thủy", 1],
+    ["[CNXHKH] Đối tượng nghiên cứu của chủ nghĩa xã hội khoa học là gì?", "Là những quy luật và tính quy luật chính trị - xã hội của quá trình phát sinh, hình thành và phát triển hình thái kinh tế - xã hội cộng sản chủ nghĩa.", "Là những quy luật kinh tế hình thành, phát triển và hoàn thiện của các hình thái kinh tế - xã hội.", "Là những quy luật và tính quy luật chính trị - xã hội của quá trình phát sinh, hình thành và phát triển hình thái kinh tế - xã hội tư bản chủ nghĩa.", "Cả a, b và c.", 0],
+    ["[CNXHKH] Hạn chế của chủ nghĩa xã hội không tưởng trước Mác là…", "Chưa thấy được sứ mệnh lịch sử của giai cấp công nhân", "Chưa chỉ ra được con đường đấu tranh cách mạng", "Không luận chứng được một cách khoa học về bản chất của chủ nghĩa tư bản và quy luật phát triển của chủ nghĩa tư bản", "Cả A, B, C.", 3],
+    ["[CNXHKH] Nguồn gốc lý luận trực tiếp ra đời chủ nghĩa xã hội khoa học là…", "Triết học cổ điển Đức", "Kinh tế chính trị học cổ điển Anh", "Chủ nghĩa xã hội không tưởng – phê phán", "Cả a, b và c", 2],
+    ["[CNXHKH] Chọn phương án đúng nhất: Chủ nghĩa Mác – Lê-nin được cấu thành từ ba bộ phận lý luận cơ bản là:", "Chủ nghĩa xã hội không tưởng, Triết học Mác – Lê-nin, Kinh tế chính trị học Mác – Lê-nin", "Triết học Mác – Lê-nin, Kinh tế chính trị học Mác – Lê-nin, Chủ nghĩa xã hội khoa học.", "Kinh tế chính trị học, Chủ nghĩa xã hội không tưởng, Triết học Mác – Lê-nin", "Triết học cổ điển Đức, Kinh tế chính trị học cổ điển Anh, Chủ nghĩa xã hội không tưởng Pháp", 1],
+    ["[CNXHKH] Nhà nước nào mà Lê-nin gọi là “nửa nhà nước”?", "Nhà nước chủ nô", "Nhà nước tư sản", "Nhà nước phong kiến", "Nhà nước XHCN", 3],
+    ["[CNXHKH] Tác phẩm đánh dâu sự ra đời của chủ nghĩa xã hội khoa học là tác phẩm…", "Tư bản", "Chống Đuyrinh", "Tuyên ngôn của Đảng cộng sản", "Biện chứng của tự nhiên", 2],
+    ["[CNXHKH] Chọn ý đúng trong các ý sau về nhà nước…", "Đến giai đọan cao của xã hội CSCN nhà nước tự tiêu vong", "Đến giai đọan cao của xã hội CSCN nhà nước vẫn còn là nhà nước kiểu mới", "Đến giai đọan cao của xã hội CSCN nhà nước vẫn sẽ còn duy trì", "Đến giai đọan cao của xã hội CSCN nhà nước là nửa nhà nước", 0],
+    ["[CNXHKH] Nguyên tắc phân phối trong giai đoạn cao của hình thái CSCN là:", "Làm theo năng lực, hưởng theo lao động", "Làm theo năng lực, hưởng theo nhu cầu", "Làm ít hưởng ít, làm nhiều hưởng nhiều", "Tất cả các câu đều sai.", 1],
+    ["[CNXHKH] Những nguyên tắc cơ bản của chủ nghĩa Mác – Lê-nin trong việc giải quyết vấn đề dân tộc là:", "Các dân tộc hoàn toàn bình đẳng", "Các dân tộc được quyền tự quyết", "Liên hiệp công nhân tất cả các dân tộc", "Tất cả các câu đều đúng", 3],
+    ["[CNXHKH] Chọn phương án đúng nhất: Sự ra đời và phát triển của giai cấp công nhân hiện đại gắn liền với sư ra đời và phát triển của:", "Sản xuất thủ công", "Công trường thủ công", "Nền đại công nghiệp tư bản chủ nghĩa", "Cả A, B, C đều sai.", 2],
+    ["[CNXHKH] Nội dung sứ mệnh lịch sử của giai cấp công nhân là:", "Xóa bỏ chế độ chiếm hữu nô lệ, xây dựng chế độ phong kiến", "Xóa bỏ chế độ phong kiến, xây dựng chế độ tư bản chủ nghĩa", "Xóa bỏ chế độ tư bản chủ nghĩa, xây dựng chế độ chủ nghĩa xã hội, chủ nghĩa cộng sản", "Cả A, B, C đều sai", 2],
+    ["[CNXHKH] Trong chủ nghĩa tư bản, giai cấp công nhân đại biểu cho phương thức sản xuất:", "Tiên tiến", "Lạc hậu", "Manh mún", "Cả A, B, C", 0],
+    ["[CNXHKH] Trong chủ nghĩa tư bản, giai cấp công nhân có mấy đặc trưng cơ bản?", "2", "3", "4", "5", 0],
+    ["[CNXHKH] Một số thuật ngữ khác nhau được C.Mác và Ph.Ănghen sử dụng có ý nghĩa tương đồng với khái niệm giai cấp công nhân:", "Giai cấp vô sản", "Giai cấp công nhân hiện đại", "Giai cấp công nhân đại công nghiệp", "Cả A, B, C", 3],
+    ["[CNXHKH] Nguyên nhân nhận thức cho sự tồn tại của tín ngưỡng, tôn giáo là", "Con người sợ sệt thần linh", "Con người chưa nhận thức và chế ngự được các hiện tượng tự nhiên, xã hội", "Con người huy động sức mạnh của thần linh", "Tất cả các câu đều sai", 1],
+    ["[CNXHKH] Cách sắp xếp nào sau đây đúng về sự xuất hiện của các tộc người trong lịch sử?", "Thị tộc, bộ lạc, bộ tộc, dân tộc", "Bộ tộc, bộ lạc, thị tộc, dân tộc", "Bộ lạc, thị tộc, bộ tộc, dân tộc", "Tất cả các câu đều sai", 0],
+    ["[CNXHKH] Dân tộc ở Châu Á hình thành khi nào?", "Khi chủ nghĩa tư bản hình thành và phát triển", "Khi cộng đồng hợp sức chống thiên tai và giặc ngoại xâm", "Khi ý thức dân tộc trỗi dậy", "Tất cả các câu đều đúng", 1],
+    ["[CNXHKH] Một trong những vai trò của gia đình", "Gia đình là cội nguồn của nhân cách", "Gia đình là nơi nuôi dưỡng tình cảm và lý trí", "Gia đình là tế bào của xã hội", "Tất cả các câu đều đúng", 2],
+    ["[CNXHKH] Phương pháp luận chung nhất của chủ nghĩa xã hội khoa học là...", "CNDVBC và CNDVLS", "Lôgic và lịch sử", "Thống kê và so sánh", "Phân tích và so sánh", 0],
+    ["[CNXHKH] Phương pháp có tính đặc thù của chủ nghĩa xã hội khoa học là...?", "Logic và lịch sử", "Thống kê và so sánh", "Phân tích và so sánh", "Phương pháp khảo sát và phân tích về mặt chính trị - xã hội dựa trên các điều kiện kinh tế - xã hội cụ thể", 3],
+    ["[CNXHKH] V.I.Lênin chia PTSX CSCN thành mấy giai đoạn?", "Hai giai đoạn: CNXH và CNCS", "Ba giai đoạn: TKQD, CNXH và CNCS", "Bốn giai đoạn TKQĐ, CNXH, CNXH phát triển và CNCS", "Tất cả các câu đều sai", 1],
+    ["[CNXHKH] Thời kỳ quá độ lên CNXH là tất yếu đối với:", "Các nước bỏ qua CNTB lên CNXH", "Các nước TBCN kém phát triển lên CNXH", "Tất cả các nước xây dựng CNXH", "Các nước TBCN phát triển lên CNXH", 2],
+    ["[CNXHKH] Thực chất của TKQD lên CNXH là gì?", "Là cuộc cải biến cách mạng về kinh tế", "Là cuộc cải biến cách mạng về chính trị", "Là cuộc cải biến cách mạng về tư tưởng và văn hoá", "Tất cả các câu đều đúng", 3],
+    ["[CNXHKH] Thời kỳ quá độ lên chủ nghĩa xã hội trên phạm vi cả nước ta bắt đầu từ khi nào?", "8/1945", "5/1954", "4/1975", "2/1930", 2],
+    ["[CNXHKH] Nền kinh tế tri thức được xem là:", "Một phương thức sản xuất mới", "Một hình thái kinh tế - xã hội mới", "Một giai đoạn mới của CNTB hiện đại", "Một nấc thang phát triển của lực lượng sản xuất", 3],
+    ["[CNXHKH] So với các nền dân chủ trước đây, dân chủ xã hội chủ nghĩa có điểm khác biệt cơ bản nào?", "Không còn mang tính giai cấp.", "Là nền dân chủ phi lịch sử.", "Là nền dân chủ thuần tuý.", "Là nền dân chủ rộng rãi cho giai cấp công nhân và nhân dân lao động.", 3],
+    ["[CNXHKH] Giai cấp công nhân là tập đoàn người lao động sử dụng công cụ sản xuất có tính:", "Thủ công", "Công nghiệp", "Thổ sơ", "Cả A, B, C", 1],
+    ["[CNXHKH] C. Mác đã khẳng định: “... trong công xưởng thì người công nhân phải phục vụ máy móc” là muốn đề cập đến giai cấp nào?", "Giai cấp công nhân hiện đại", "Giai cấp nông dân", "Giai cấp tư sản", "Tầng lớp trí thức", 0],
+    ["[CNXHKH] Chọn phương án đúng nhất: Trong chủ nghĩa tư bản, giai cấp công nhân hiện đại có nguồn gốc từ:", "Giai cấp nông dân", "Thợ thủ công", "Tiểu chủ", "Cả A, B, C", 3],
+    ["[CNXHKH] Liên minh giữa giai cấp công nhân với giai cấp nông dân và tầng lớp trí thức là do:", "Do mong muốn của công nhân.", "Yêu cầu của nông dân", "Yêu cầu của trí thức", "Đòi hỏi khách quan của cả công nhân, nông dân và trí thức.", 3],
+    ["[CNXHKH] Dân chủ là gì?", "Là quyền lực thuộc về nhân dân", "Là quyền của con người", "Là quyền tự do của mỗi người", "Là trật tự xã hội", 0],
+    ["[CNXHKH] Bản chất chính trị của nền dân chủ XIICN thể hiện như thế nào?", "Là sự lãnh đạo của giai cấp CN thông qua Đảng của nó đối với toàn XH, để thực hiện quyền lực và lợi ích của toàn thể NDLD, trong đó có giai cấp CN.", "Là thực hiện quyền lực của giai cấp CN và nhân dân lao động đối với toàn XH.", "Là sự lãnh đạo của giai cấp CN thông qua chính đáng của nó để cải tạo XH cũ và xây dựng XH mới", "Tất cả các câu đều đúng", 0],
+    ["[CNXHKH] Điền từ còn thiếu vào chỗ trống: Nhà nước XHCN vừa có bản chất giai cấp CN, vừa có tính nhân dân rộng rãi và tính.......sâu sắc.", "Giai cấp", "Dân tộc", "Nhân đạo", "Cộng đồng.", 1],
+    ["[CNXHKH] Bản chất của nhà nước XHCN là gì?", "Mang bản chất của giai cấp CN.", "Mang bản chất của đa số NDLD.", "Mang bản chất của giai cấp CN, tính nhân dân rộng rãi và tính dân tộc sâu sắc.", "Vừa mang bản chất của giai cấp CN, vừa mang bản chất của NDLĐ và tính dân tộc sâu sắc.", 2],
+    ["[CNXHKH] Sự khác biệt cơ bản của nền dân chủ XHCN với các nền dân chủ của các XH có phân chia giai cấp trong lịch sử nhân loại?", "Nền dân chủ XHCN là nền dân chủ của số đông, của tất cả quần chúng nhân dân lao động trong XH.", "Nền dân chủ XHCN là nền dân chủ có tổ chức đảng cộng sản lãnh đạo.", "Nền dân chủ XHCN là nền dân chủ được thực thi bằng luật pháp nhân dân.", "Nền dân chủ XHCN là nền dân chủ phi giai cấp.", 3],
+    ["[CNXHKH] Bản chất kinh tế của nền dân chủ XHCN dựa trên cơ sở nào?", "Chế độ chính trị của giai cấp công nhân.", "Cơ chế quản lý nền kinh tế XHCN.", "Chế độ công hữu về tư liệu sản xuất chủ yếu.", "Bản chất chính trị XHCN.", 2],
+    ["[CNXHKH] Trong chế độ tư bản chủ nghĩa, “không có tư liệu sản xuất, phải bán sức lao động và bị bóc lột giá trị thặng dư” là đặc trưng cơ bản để phân biệt giai cấp công nhân với:", "Tầng lớp tri thức", "Giai cấp nông dân", "Giai cấp tư sản", "Cả A, B, C", 2],
+    ["[CNXHKH] Chọn phương án đúng nhất: Trong chế độ tư bản chủ nghĩa, mâu thuẫn giữa giai cấp công nhân và giai cấp tư sản là mâu thuẫn đối kháng:", "Trực tiếp", "Gián tiếp", "Trực tiếp và gián tiếp", "Cả A, B, C đều sai", 0],
+    ["[CNXHKH] Chọn phương án đúng nhất: Theo chủ nghĩa Mác - Lênin, trong chế độ tư bản chủ nghĩa, giai cấp công nhân là giai cấp:", "Không có tư liệu sản xuất", "Bị áp bức, bóc lột", "Lao động trong nền đại công nghiệp", "Cả A, B, C", 0],
+    ["[CNXHKH] Điền từ còn thiếu vào chỗ trống: Đảng cộng sản Việt Nam ra đời là sản phẩm của sự kết hợp chủ nghĩa Mác - Lênin, với phong trào công nhân và ... ở nước ta vào năm 30 của thế kỷ XX.", "Chủ nghĩa yêu nước", "Phong trào yêu nước", "Truyền thống yêu nước", "Truyền thống dân tộc", 1],
+    ["[CNXHKH] Cơ sở vật chất - kỹ thuật của chủ nghĩa tư bản là gì?", "Công trường thủ công;", "Cuộc cách mạng công nghiệp", "Nền đại công nghiệp cơ khí", "Trình độ sản xuất máy móc, cơ khí hoá.", 2],
+    ["[CNXHKH] Nguyên nhân sâu xa của cách mạng XHCN", "Mâu thuẫn giữa LLSX và QHSX", "Do sự phát triển của giai cấp công nhân", "Do sự phát triển của LLSX", "Giai cấp tư sản đã trở thành giai cấp phân động", 0],
+    ["[CNXHKH] Động lực cơ bản, chủ yếu của cách mạng XHCN là", "Giai cấp nông dân", "Giai cấp tư sản", "Giai cấp công nhân", "Cả a,b,c", 2],
+    ["[CNXHKH] Tôn giáo hình thành là do", "Trình độ nhận thức", "Trong xã hội có áp bức bóc lột", "Do tâm lý, tình cảm", "Tất cả các câu đều đúng", 3],
+    ["[CNXHKH] Câu nói này là của ai? “Giữa xã hội tư bản chủ nghĩa và xã hội cộng sản chủ nghĩa là một thời kỳ cải biển cách mạng từ xã hội nọ sang xã hội kia. Thích ứng với thời kỳ đó là một thời kỳ quá độ về chính trị trong đó nhà nước không phải là cái gì khác hơn là chuyên chính vô sản”.", "C.Mác", "Ph. Ănghen", "V.I. Lenin", "C.Mác và Ph.Ănghen", 0],
+    ["[CNXHKH] Hình thái kinh tế - xã hội cộng sản chủ nghĩa bắt đầu và kết thúc khi nào?", "Từ khi đảng cộng sản ra đời và xây dựng xong chủ nghĩa xã hội", "Bắt đầu từ thời kỳ quá độ cho đến khi xây dựng xong giai đoạn cao của xã hội công sản", "Bắt đầu từ giai đoạn cao của xã hội cộng sản và kết thúc ở giai đoạn cao của xã hội cộng sản", "Cả ba đều sai", 1],
+    ["[CNXHKH] Sự thay đổi căn bản, toàn diện, và triệt để một hình thái kinh tế - xã hội này bằng một hình thái kinh tế - xã hội khác là...", "Đột biến xã hội", "Cải cách xã hội", "Cách mạng xã hội", "Đảo chính", 2],
+    ["[CNXHKH] Cơ sở kinh tế của nền dân chủ xã hội chủ nghĩa là chế độ công hữu về...", "Tư liệu sinh hoạt", "Tư liệu sản xuất chủ yếu", "Mọi tư liệu lao động trong xã hội", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Chọn phương án đúng nhất: Nền dân chủ xã hội chủ nghĩa có sức động viên ... trong sự nghiệp xây dựng xã hội mới.", "Nhân dân", "Giai cấp công nhân", "Giai cấp nông dân", "Cả A, B, C đều sai", 0],
+    ["[CNXHKH] Theo Lênin, quy luật hình thành và phát triển Đảng cộng sản của giai cấp công nhân là", "Chủ nghĩa Mác kết hợp với phong trào công nhân", "Chủ nghĩa Mác-Lênin kết hợp với phong trào công nhân", "Chủ nghĩa Mác - Lênin kết hợp với phong trào công nhân và phong trào yêu nước", "Tất cả các câu đều sai", 1],
+    ["[CNXHKH] Cách mạng XHCN theo nghĩa hẹp là", "Là một cuộc cách mạng chính trị được kết thúc bằng việc giai cấp công nhân và nhân dân lao động giành được chính quyền, thiết lập nhà nước chuyên chính vô sản", "Là một cuộc cách mạng có nội dung chủ yếu về mặt kinh tế dưới sự lãnh đạo của giai cấp công nhân để xây dựng CNXH và CNCS", "Là quá trình cải biến một cách toàn diện trên tất cả các lĩnh vực của đời sống xã hội từ kinh tế, chính trị, văn hóa, tư tưởng, ... để xây dựng chủ nghĩa xã hội và cuối cùng là CNCS", "Là cuộc cách mạng của giai cấp công nhân, cùng với nhân dân lao động đánh đổ sự thống trị giai cấp tư sản và lật đổ CNTB", 0],
+    ["[CNXHKH] Cách mạng XHCN theo nghĩa rộng là", "Là một cuộc cách mạng chính trị được kết thúc bằng việc giai cấp công nhân và nhân dân lao động giành được chính quyền, thiết lập nhà nước chuyên chính vô sản", "Là một cuộc cách mạng có nội dung chủ yếu về mặt kinh tế dưới sự lãnh đạo của giai cấp công nhân để xây dựng CNXH và CNCS", "Là quá trình cải biến một cách toàn diện trên tất cả các lĩnh vực của đời sống xã hội từ kinh tế, chính trị, văn hóa, tư tưởng, ... để xây dựng chủ nghĩa xã hội và cuối cùng là CNCS", "Là cuộc cách mạng của giai cấp công nhân, cùng với nhân dân lao động đánh đổ sự thống trị giai cấp tư sản và lật đổ CNTB", 2],
+    ["[CNXHKH] Nhà nước xã hội chủ nghĩa đặt dưới sự ... của đảng cộng sản.", "Lãnh đạo", "Quản lý", "Chuyên chính", "Cả A, B, C đều sai", 0],
+    ["[CNXHKH] Đối với lực lượng chống đối, phá hoại sự nghiệp cách mạng xã hội chủ nghĩa, nhà nước xã hội chủ nghĩa thực hiện...", "Sự trấn áp", "Sự tổ chức", "Sự quản lý", "Cả A, B, C", 0],
+    ["[CNXHKH] Tổ chức nào thực hiện sự trấn áp đối với lực lượng chống đối, phá hoại sự nghiệp cách mạng xã hội chủ nghĩa?", "Đảng cộng sản", "Nhà nước xã hội chủ nghĩa", "Nghiệp đoàn", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Phạm trù dân chủ xuất hiện khi nào?", "Ngay từ khi có xã hội loài người", "Khi có nhà nước", "Khi có nhà nước vô sản", "Tất cả các câu đều đúng", 1],
+    ["[CNXHKH] Theo C.Mác và Ph.Ănghen thì hình thái kinh tế cộng sản chủ được chia làm mấy giai đoạn?", "Hai", "Ba", "Bốn", "Năm", 0],
+    ["[CNXHKH] Yếu tố nào quyết định sự liên minh giữa giai cấp công nhân, giai cấp nông dân và tầng lớp trí thức?", "Do giai cấp công nhân mong muốn", "Do có cùng kẻ thù là giai cấp tư sản", "Do có những lợi ích cơ bản thống nhất với nhau", "Do mục tiêu về chính trị của giai cấp công nhân", 2],
+    ["[CNXHKH] Nội dung nào quan trọng nhất trong nội dung liên minh công nhân, nông dân và các tầng lớp lao động trong xã hội?", "Chính trị", "Kinh tế", "Văn hóa - xã hội", "Tư tưởng", 1],
+    ["[CNXHKH] Các thế lực thù địch sử dụng chiến lược \"diễn biến hòa bình\" chống phá sự nghiệp xây dựng CNXH của các nước trên phương diện nào?", "Kinh tế, chính trị, xã hội", "Đạo đức, lối sống", "Văn hóa, tư tưởng", "Cả A, B, C", 3],
+    ["[CNXHKH] Chọn phương án đúng nhất. Gia đình là một hình thức cộng đồng đặc biệt, bao gồm các mối quan hệ cơ bản nào?", "Quan hệ hôn nhân và quan hệ huyết thống", "Quan hệ hôn nhân và quan hệ giáo dục", "Quan hệ nuôi dưỡng và quan hệ giáo dục", "Quan hệ huyết thống và quan hệ giáo dục", 0],
+    ["[CNXHKH] Cơ sở tổn tại của tôn giáo?", "Nhận thức của con người đối với thế giới khách quan", "Niềm tin của con người", "Sự tưởng tượng của con người", "Tồn tại xã hội", 1],
+    ["[CNXHKH] Nguồn gốc xã hội của tôn giáo?", "Trình độ phát triển của lực lượng sản xuất", "Do sự bần cùng về kinh tế, áp bức về chính trị của con người", "Do sự thất vọng, bất lực của con người trước những bất công xã hội", "Cả A, B, C", 3],
+    ["[CNXHKH] Giữa chủ nghĩa Mác - Lênin và tôn giáo khác nhau điểm nào?", "Khác nhau về thế giới quan", "Khác nhau về con đường mưu cầu hạnh phúc", "Khác nhau về nhân sinh quan", "Cả A, B, C", 3],
+    ["[CNXHKH] Chức năng nào được coi là chức năng cơ bản và riêng có của gia đình?", "Tái sản xuất ra con người", "Tổ chức đời sống gia đình", "Giáo dục gia đình", "Thỏa mãn tâm sinh lý", 0],
+    ["[CNXHKH] Những đặc trưng cơ bản của xã hội XHCN gồm mấy đặc trưng?", "Bốn", "Năm", "Sáu", "Bảy", 2],
+    ["[CNXHKH] Tín ngưỡng tôn giáo khác các loại tín ngưỡng ở ?", "Có mặt ở tất cả các nước", "Có hệ thống giáo lý, giáo luật", "Có tín đồ đông hơn", "Ra đời sớm hơn", 1],
+    ["[CNXHKH] Vì sao tôn giáo mang tính chính trị?", "Do sự kém hiểu biết của con người", "Vì tôn giáo hướng con người đến thế giới không có thực", "Vị tôn giáo có giá trị tích cực về mặt đạo đức", "Vì các giai cấp bóc lột thống trị thường lợi dụng tôn giáo để phục vụ lợi ích", 3],
+    ["[CNXHKH] Chọn phương án đúng nhất: Các nguyên tắc cơ bản của chủ nghĩa Mác - Lênin trong việc giải quyết vấn đề dân tộc là:", "Các dân tộc hoàn toàn bình đẳng", "Các dân tộc được quyền tự quyết", "Liên hiệp công nhận tất cả các dân tộc", "Cả A, B, C", 3],
+    ["[CNXHKH] Một trong những nguyên tắc cơ bản của chủ nghĩa Mác - Lênin trong việc giải quyết vấn đề dân tộc là các dân tộc là:", "Hoàn toàn bình đẳng", "Mâu thuẫn với nhau", "Lệ thuộc vào nhau", "Tách ra thành lập quốc gia dân tộc độc lập", 0],
+    ["[CNXHKH] “Quyền tự do phân lập thành cộng đồng quốc gia dân tộc độc lập” là một trong những nội dung của nguyên tắc nào trong cương lĩnh dân tộc của chủ nghĩa Mác - Lênin?", "Các dân tộc hoàn toàn bình đẳng", "Các dân tộc được quyền tự quyết", "Liên hiệp công nhận tất cả các dân tộc", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Xét trong quan hệ sản xuất tư bản chủ nghĩa, giai cấp công nhân có vị trí như thế nào?", "Là giai cấp nghèo khổ nhất, không có tài sản", "Là giai cấp không có tư liệu sản xuất, đi làm thuê cho nhà tư bản, bị nhà tư bản bóc lột giá trị thặng dư", "Là giai cấp có số lượng đông trong dân cư, luôn đi đầu trong cuộc đấu tranh chống giai cấp tư sản", "Tất cả các câu đều đúng", 1],
+    ["[CNXHKH] Điều kiện khách quan quy định sứ mệnh lịch sử của giai cấp công nhân là do giai cấp công nhân...", "Đông về số lượng", "Gắn liền với LLSX tiên tiến", "Tạo ra của cải làm giàu cho xã hội", "Bị bóc lột nặng nề nhất", 1],
+    ["[CNXHKH] Giai cấp công nhân là giai cấp triệt để cách mạng vì", "Là giai cấp nghèo khổ nhất", "Là giai cấp không có tài sản, đời sống bấp bênh", "Là giai cấp thực hiện xóa bỏ chế độ tư hữu TBCN", "Tất cả các câu đều đúng", 2],
+    ["[CNXHKH] “Đấu tranh chống chủ nghĩa phân biệt chủng tộc, chủ nghĩa bá quyền nước lớn” là hành động để thực hiện nguyên tắc nào trong cương lĩnh dân tộc của chủ nghĩa Mác - Lênin?", "Các dân tộc hoàn toàn bình đẳng", "Các dân tộc được quyền tự quyết", "Liên hiệp công nhận tất cả các dân tộc", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] “Đấu tranh chống sự áp bức, bóc lột của các nước tư bản phát triển đổi với các nước lạc hậu, chậm phát triển về kinh tế” là hành động để thực hiện nguyên tắc nào trong cương lĩnh dân tộc của chủ nghĩa Mác - Lênin?", "Các dân tộc hoàn toàn bình đẳng", "Các dân tộc được quyền tự quyết", "Liên hiệp công nhận tất cả các dân tộc", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Trong nguyên tắc “Các dân tộc được quyền tự quyết”, tự quyết được hiểu là:", "Quyền bình đẳng trong quan hệ quốc tế", "Quyền làm chủ của mỗi dân tộc", "Quyền liên hiệp của các dân tộc", "Cả A, B, C", 1],
+    ["[CNXHKH] Nguyên tắc \"Các dân tộc được quyền tự quyết\" được hiểu là:", "Quyền can thiệp vào công việc nội bộ của các nước", "Quyền đòi ly khai, chia rẽ dân tộc", "Quyền tự quyết định con đường phát triển kinh tế, chính trị - xã hội", "Cả A, B, C", 2],
+    ["[CNXHKH] Đặc điểm của thời kỳ quá độ lên chủ nghĩa xã hội về mặt tư tưởng - văn hóa là:", "Chỉ tồn tại các yếu tố tư tưởng, văn hóa cũ", "Chỉ tồn tại các yếu tố tư tưởng, văn hóa mới", "Các yếu tố tư tưởng, văn hóa cũ và mới đan xen nhau", "Cả A, B, C", 2],
+    ["[CNXHKH] Thực chất của thời kỳ quá độ từ chủ nghĩa tư bản lên chủ nghĩa xã hội là tồn tại cuộc đấu tranh giai cấp giữa giai cấp công nhân với:", "Giai cấp nông dân", "Giai cấp tư sản đã bị đánh bại", "Giai cấp tư sản đang thống trị", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Cuộc đấu tranh giai cấp trong thời kỳ quá độ lên chủ nghĩa xã hội diễn ra trong điều kiện mới là giai cấp công nhân đã:", "Giành được chính quyền", "Chưa giành được chính quyền", "Giành được quyền thống trị về mặt kinh tế", "Cả A, B, C đều sai", 0],
+    ["[CNXHKH] Chọn phương án đúng nhất: Nội dung của thời kỳ quá độ lên chủ nghĩa xã hội diễn ra trên các lĩnh vực nào?", "Kinh tế, chính trị", "Kinh tế, chính trị, xã hội", "Kinh tế, chính trị, tư tưởng - văn hóa", "Kinh tế, chính trị, tư tưởng - văn hóa, xã hội", 3],
+    ["[CNXHKH] Chủ nghĩa tư bản dựa trên chế độ sở hữu nào về tư liệu sản xuất chủ yếu?", "Tự hữu", "Tập thể", "Hỗn hợp", "Công hữu", 0],
+    ["[CNXHKH] Chủ nghĩa xã hội dựa trên chế độ sở hữu nào về tư liệu sản xuất chủ yếu?", "Tư hữu", "Tập thể", "Hỗn hợp", "Công hữu", 3],
+    ["[CNXHKH] Cơ sở kinh tế của chủ nghĩa xã hội khác về bản chất so với chủ nghĩa tư bản là:", "Chế độ sở hữu về tư liệu sản xuất", "Chế độ tư hữu về tư liệu sản xuất", "Chế độ công hữu về tư liệu sản xuất", "Cả A, B, C đều sai", 2],
+    ["[CNXHKH] Chế độ công hữu về tư liệu sản xuất trong chủ nghĩa xã hội và chế độ tư hữu về tư liệu sản xuất trong chủ nghĩa tư bản là sự khác nhau bản chất về:", "Cơ sở chính trị", "Cơ sở kinh tế", "Cơ sở tư tưởng", "Cả A, B, C đều sai", 1],
+    ["[CNXHKH] Chế độ hôn nhân tiến bộ biểu hiện như thế nào?", "Hôn nhân tự nguyện", "Hôn nhân một vợ, một chồng bình đẳng", "Hôn nhân được đảm bảo về pháp lý", "Cả A,B,C", 3],
+    ["[CNXHKH] Chọn phương án đúng nhất: tư yếu dưới chủ nghĩa tư bản thuộc về:", "Công nhân", "Tư sản", "Nông dân", "Tri thức", 1],
+    ["[CNXHKH] Đại biểu cho lực lượng sản xuất tiên tiến trong chế độ tư bản chủ nghĩa là:", "Giai cấp nông dân", "Giai cấp tư sản", "Giai cấp công nhân", "Tầng lớp trí thức", 2],
+    ["[CNXHKH] Đại biểu cho quan hệ sản xuất chiếm hữu tư nhân tư bản chủ nghĩa về tư liệu sản xuất trong chế độ tư bản chủ nghĩa là:", "Giai cấp công nhân", "Giai cấp nông dân", "Giai cấp tư sản", "Tri thức", 2],
+    ["[CNXHKH] Quy luật ra đời của Đảng cộng sản ở các nước tư bản chủ nghĩa phát triển là sự kết hợp:", "Chủ nghĩa Mác với phong trào công nhân", "Chủ nghĩa Mác với phong trào công nhân và phong trào yêu nước", "Chủ nghĩa Mác với phong trào công nhân và phong trào nông dân", "Cả A, B, C đều sai", 0],
+    ["[CNXHKH] Tổ chức chính trị cao nhất để lãnh đạo giai cấp công nhân thực hiện sứ mệnh lịch sử là:", "Công đoàn", "Nghiệp đoàn", "Đảng cộng sản", "Giáo hội", 2],
+    ["[CNXHKH] Chọn phương án đúng nhất: Trong chế độ tư bản chủ nghĩa, giai cấp công nhân là giai cấp tiên phong cách mạng vì họ là giai cấp:", "Đại biểu cho phương thức sản xuất tiên tiến", "Được trang bị lý luận Mác - Lênin", "Đi đầu trong mọi phong trào cách mạng", "Cả A, B, C", 3]
+  ];
+  let qz = null;
+  const qzEl = document.createElement('div');
+  qzEl.className = 'mode-section'; qzEl.id = 'mode-4';
+  document.querySelector('.game-container').appendChild(qzEl);
+  function shuf(a) { return a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]); }
+  function fmt(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  const qtag = q => (q[0].match(/^\[([^\]]+)\]/) || [0, 'Triết'])[1];
+  function topicBtns() {
+    const c = {}; QB.forEach(q => { const t = qtag(q); c[t] = (c[t] || 0) + 1; });
+    return `<button class="action-btn" onclick="qzStart()">▶ Đề tổng hợp (50 câu ngẫu nhiên)</button><div style="margin-top:6px">` +
+      Object.keys(c).map(t => `<button class="action-btn" style="margin:4px 6px 0 0;font-size:0.8rem" onclick="qzStart('${t}')">${t} (${c[t]})</button>`).join('') + '</div>';
+  }
+  function qzIntro() {
+    if (qz && qz.timer) clearInterval(qz.timer);
+    qz = null;
+    qzEl.innerHTML = `<h3 style="color:var(--accent3);margin-bottom:4px;">📝 Luyện Đề Olympic Mác - Lênin</h3>
+      <p style="font-size:0.86rem;color:var(--muted);">Ngân hàng ${QB.length} câu. Mỗi lượt bốc ngẫu nhiên tối đa 50 câu, xáo trộn đáp án, 45 giây/câu. Cuối bài có xem lại câu sai.</p>
+      ${topicBtns()}
+      <p class="qz-note">Nguồn: bộ câu hỏi ôn thi Olympic cấp thành do nhóm tổng hợp. Đối chiếu lại với giáo trình chính thức trước khi thi.</p>`;
+  }
+  function qzStart(tag) {
+    const pool = tag ? QB.filter(q => qtag(q) === tag) : QB;
+    const items = shuf(pool).slice(0, 50).map(q => {
+      const opts = shuf([0, 1, 2, 3].map(i => ({ t: q[i + 1], c: i === q[5] })));
+      return { q: q[0], opts, pick: -1 };
+    });
+    qz = { items, i: 0, left: items.length * 45 };
+    qz.timer = setInterval(() => { qz.left--; const t = document.getElementById('qz-time'); if (t) t.innerText = fmt(qz.left); if (qz.left <= 0) qzEnd(); }, 1000);
+    qzShow();
+  }
+  function qzShow() {
+    const it = qz.items[qz.i];
+    qzEl.innerHTML = `<div class="qz-top"><span>Câu ${qz.i + 1}/${qz.items.length}</span><span>⏱ <span id="qz-time">${fmt(qz.left)}</span></span></div>
+      <div class="qz-q">${it.q}</div>
+      ${it.opts.map((o, k) => `<button class="qz-opt" onclick="qzPick(${k})">${'ABCD'[k]}. ${o.t}</button>`).join('')}
+      <div id="qz-next"></div>`;
+  }
+  function qzPick(k) {
+    const it = qz.items[qz.i];
+    if (it.pick >= 0) return;
+    it.pick = k;
+    document.querySelectorAll('.qz-opt').forEach((b, j) => { if (it.opts[j].c) b.classList.add('ok'); else if (j === k) b.classList.add('bad'); });
+    if (it.opts[k].c) { addScore(10); } else { resetStreak(); }
+    const last = qz.i === qz.items.length - 1;
+    document.getElementById('qz-next').innerHTML = `<button class="action-btn" onclick="${last ? 'qzEnd()' : 'qzNext()'}">${last ? '🏁 Nộp bài' : 'Câu tiếp ➜'}</button>`;
+  }
+  function qzNext() { qz.i++; qzShow(); }
+  function qzEnd() {
+    clearInterval(qz.timer);
+    const ok = qz.items.filter(x => x.pick >= 0 && x.opts[x.pick].c).length, n = qz.items.length;
+    const wrong = qz.items.filter(x => x.pick < 0 || !x.opts[x.pick].c);
+    qzEl.innerHTML = `<h3 style="color:var(--accent3);">🏁 Kết quả: ${ok}/${n} (${Math.round(ok * 100 / n)}%)</h3>
+      <p style="color:var(--muted);font-size:0.86rem;margin:6px 0;">Thời gian còn lại: ${fmt(Math.max(qz.left, 0))}</p>
+      ${wrong.length ? '<p style="margin:10px 0 4px;font-weight:700;">Các câu cần xem lại:</p>' : '<p style="margin-top:10px;">🎉 Đúng hết, quá đỉnh!</p>'}
+      ${wrong.map(x => `<div class="qz-opt" style="cursor:default"><b>${x.q}</b><br><span style="color:var(--success)">✔ ${x.opts.find(o => o.c).t}</span>${x.pick >= 0 ? `<br><span style="color:var(--danger)">✘ Bạn chọn: ${x.opts[x.pick].t}</span>` : '<br><span style="color:var(--danger)">✘ Chưa trả lời</span>'}</div>`).join('')}
+      <button class="action-btn" onclick="qzIntro()">🔄 Làm lại</button>`;
+    qz.timer = null;
+  }
+  qzIntro();
+
+  // Init all modes
+  renderSwipe();
+  initMemoryGame();
+  renderBlueprint();
+  renderTimeline();
+</script>
+<div class="credit-footer">
+  © Game được thiết kế bởi <b>Tạ Trần Ngọc Ánh – CLC50F</b><br>
+  Liên hệ tác giả qua Zalo: <b>0906 819 341</b><br>
+  Vui lòng giữ nguyên tên tác giả khi chia sẻ lại 💛
+</div>
+</body>
+</html>
