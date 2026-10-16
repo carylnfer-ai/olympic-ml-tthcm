@@ -1599,5 +1599,108 @@
   Liên hệ tác giả qua Zalo: <b>0906 819 341</b><br>
   Vui lòng giữ nguyên tên tác giả khi chia sẻ lại 💛
 </div>
+<!-- ================= ĐỒNG BỘ BẢNG XẾP HẠNG ONLINE VĨNH VIỄN (MỌI THIẾT BỊ) ================= -->
+<script>
+  // Kho lưu trữ Cloud miễn phí đã tạo sẵn riêng cho web của Ngọc Ánh (không cần cấu hình thêm!)
+  const CLOUD_URL = "https://kvdb.io/UlawOlympicClc50fNgocAnh2026/bxh_toan_doi";
+
+  // 1. Nâng cấp để làm mục nào (Tổng hợp, Triết, KTCT, CNXHKH, TTHCM, NQ XIV) cũng đều hiện tên + [Mục đó] lên BXH!
+  window.ghiBXH = function(ok, n, sec) {
+    let name = docTen();
+    if (!name) {
+      name = (prompt('Nhập tên để lên bảng xếp hạng 🏅', '') || '').trim().slice(0, 20);
+      if (name) { try { localStorage.setItem(LS_NAME, name); } catch (e) {} }
+      else name = 'Ẩn danh';
+    }
+    const mucThi = (qz && qz.tag) ? qz.tag : 'Tổng hợp';
+    const rec = { name: `${name} [${mucThi}]`, ok, n, sec, ts: Date.now() };
+    const all = docBXH(); all.push(rec); all.sort(ssBXH);
+    const top = all.slice(0, 20);
+    try { localStorage.setItem(LS_BOARD, JSON.stringify(top)); } catch (e) {}
+    dongBoLenCloud(); // Đẩy ngay lên đám mây cho 5 máy kia thấy!
+    return top.indexOf(rec);
+  };
+
+  // Mở khóa cho phép mọi mục ở Tab 5 đều được ghi danh khi nộp bài
+  const _oldQzStartCloud = window.qzStart;
+  window.qzStart = function(tag) {
+    _oldQzStartCloud(tag);
+    if (qz) qz.ranked = true; // Cho phép mọi chuyên đề đều lên BXH
+  };
+
+  // Khi hoàn thành Mode 1, 2, 3, 4 cũng tự động đẩy lên đám mây
+  const _oldGhiBCloud = window.ghiB;
+  window.ghiB = function(k, rec) {
+    const pos = _oldGhiBCloud(k, rec);
+    dongBoLenCloud();
+    return pos;
+  };
+
+  // 2. Hàm Gộp dữ liệu (Giữ vĩnh viễn kỷ lục của tất cả các máy, không bao giờ mất)
+  function gopDanhSach(arr1, arr2, isQuiz) {
+    const gop = [...(arr1 || []), ...(arr2 || [])];
+    const daCo = new Set();
+    const kq = [];
+    for (const r of gop) {
+      if (!r || !r.name) continue;
+      const key = isQuiz ? `${r.name}|${r.ok}|${r.n}|${r.sec}` : `${r.name}|${r.err}|${r.sec}`;
+      if (!daCo.has(key)) { daCo.add(key); kq.push(r); }
+    }
+    kq.sort(isQuiz ? ssBXH : (x, y) => (x.err - y.err) || (x.sec - y.sec));
+    return kq.slice(0, 20);
+  }
+
+  // 3. Hàm Tải Bảng Xếp Hạng từ Đám Mây về máy
+  async function taiTuCloud() {
+    try {
+      const res = await fetch(CLOUD_URL, { cache: 'no-store' });
+      if (!res.ok) return;
+      const cloud = await res.json();
+      if (!cloud || typeof cloud !== 'object') return;
+
+      // Gộp BXH Tab 5
+      if (cloud[LS_BOARD]) {
+        const merged = gopDanhSach(docBXH(), cloud[LS_BOARD], true);
+        localStorage.setItem(LS_BOARD, JSON.stringify(merged));
+      }
+      // Gộp BXH Mode 1-4
+      ['ulaw_bxh_m1', 'ulaw_bxh_m2', 'ulaw_bxh_m4', 'ulaw_bxh_m3_0', 'ulaw_bxh_m3_1', 'ulaw_bxh_m3_2'].forEach(k => {
+        if (cloud[k]) {
+          const merged = gopDanhSach(docB(k), cloud[k], false);
+          localStorage.setItem(k, JSON.stringify(merged));
+        }
+      });
+
+      // Cập nhật lại giao diện ngay lập tức
+      [0, 1, 2, 3].forEach(m => capNhatBXH(m));
+      if (!qz) qzIntro();
+      const m5 = document.getElementById('mode-5');
+      if (m5 && m5.classList.contains('active')) renderBXHAll();
+    } catch (e) {}
+  }
+
+  // 4. Hàm Lưu Bảng Xếp Hạng lên Đám Mây vĩnh viễn
+  async function dongBoLenCloud() {
+    try {
+      await taiTuCloud(); // Lấy bản mới nhất về gộp trước khi lưu để không đè điểm của bạn khác
+      const payload = { [LS_BOARD]: docBXH() };
+      ['ulaw_bxh_m1', 'ulaw_bxh_m2', 'ulaw_bxh_m4', 'ulaw_bxh_m3_0', 'ulaw_bxh_m3_1', 'ulaw_bxh_m3_2'].forEach(k => {
+        payload[k] = docB(k);
+      });
+      await fetch(CLOUD_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+  }
+
+  // Tự động tải BXH chung ngay khi mở web & tự làm mới mỗi 15 giây
+  window.addEventListener('DOMContentLoaded', () => {
+    taiTuCloud();
+    setInterval(taiTuCloud, 15000);
+  });
+</script>
+<!-- ================= KẾT THÚC ĐỒNG BỘ ONLINE ================= -->
 </body>
 </html>
